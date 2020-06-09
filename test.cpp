@@ -947,10 +947,10 @@ char szArgv0[2048] = {0x0};
 
 
 
-int iShutdown = 0;
+bool bShutdown = false;
 void MySIG(int x)
    {
-   iShutdown = 1;
+   bShutdown = true;
    //printf("Hello From Handler\n");
    }
 
@@ -2349,7 +2349,7 @@ bool bOptionK = false;    // keep going (dont exit), use -start if provided and 
 char szOptionF_File[2048];
 bool bThreadReady;
 int m_iThreadNum;
-bool bExit = false;
+char iExit = 0;           // each thread exit will add 1 here.
    
 int ASCIItoByte(char *pIn, char *pOut) // returns #of moves
    {
@@ -2428,6 +2428,7 @@ int main(int argc, char **argv)
    _DBG_flush = true;
 #endif
 
+   
 #if 0 
    //
    // For testing/development random performance related items...
@@ -2455,6 +2456,13 @@ int main(int argc, char **argv)
       }
 #endif
 
+   signal(SIGINT,  MySIG);
+   signal(SIGTERM, MySIG);
+   //signal(SIGQUIT, MySIG);
+   //signal(SIGKILL, MySIG);
+   //signal(SIGUSR1, MySIG);
+   //signal(SIGSTOP, MySIG);
+   //signal(SIGTSTP, MySIG);
    tAppStart = time(NULL);   
    initrnd5();
 
@@ -2811,7 +2819,14 @@ int main(int argc, char **argv)
                iBench = 0;
                iBench2++;
                }
-                     
+            if(bShutdown) 
+               {
+               for(int iA=0; iA<57; ++iA)
+                  fclose(fdOLL[iA]);
+               iExit++;
+               return 0;
+               }
+
             if(bOptionF)
                {
                if(cOptionR == 2) // once all fgets is done, we can start playing with the algs.
@@ -3070,9 +3085,10 @@ int main(int argc, char **argv)
                      {
                      if(aMoves[iA] > aMovesStop[iA])    // memcmp(aMoves, aMovesStop, 60) == 0) // cost: 13 million / sec
                         {
-                        printf("Done!\n"); //need to test this
-                        bExit = true;
-                        exit(0);
+                        for(int iA=0; iA<57; ++iA)
+                           fclose(fdOLL[iA]);
+                        iExit++;
+                        return 0;
                         }
                      break;
                      }
@@ -3347,8 +3363,10 @@ int main(int argc, char **argv)
                      for(int iA=0; iA<iMaxMoves; ++iA)
                         printf("%2.2s ", mPossibleMoves.find(aMoves[iA])->second);
                      printf("\n");
-                     bExit = true;
-                     exit(0);
+                     for(int iA=0; iA<57; ++iA)
+                        fclose(fdOLL[iA]);
+                     iExit++;
+                     return 0;
                      }
                   pCurrState = rotate(pCurrState, 12, pCurrState==aState1?aState2:aState1);
                   char *pPtr2;
@@ -3390,13 +3408,13 @@ int main(int argc, char **argv)
                   }
                }
             };
+         for(int iA=0; iA<57; ++iA)
+            fclose(fdOLL[iA]);
          printf("Main part is done.\n");
          if(bOptionF)
             {      
             printf("Okay, outputting final results... recreating all text files....\n");
             char szFile[2048];
-            for(int iA=0; iA<57; ++iA)
-               fclose(fdOLL[iA]);
             for(int iA=0; iA<57; ++iA)
                {
                snprintf(szFile, sizeof(szFile), "%d", iThreadNum);
@@ -3432,13 +3450,12 @@ int main(int argc, char **argv)
             for(int iA=0; iA<57; ++iA)
                fclose(fdOLL[iA]);      
             }
-         bExit = true;
+         iExit++;
          return 0; 
          }, 8000000))
          {
          DBGS("Could not start thread, errno=%ld, strerror(errno)=[%s]", errno, strerror(errno));
-         bExit = true;
-         exit(0);
+         iExit++;
          }
       //
       // SetThreadPriority(cThread.hThread, THREAD_PRIORITY_BELOW_NORMAL); //THREAD_PRIORITY_BELOW_NORMAL //THREAD_PRIORITY_NORMAL //THREAD_PRIORITY_ABOVE_NORMAL
@@ -3449,7 +3466,7 @@ int main(int argc, char **argv)
       Sleep(4000);
       }  
    printf(".All Threads are running.\n"); fflush(stdout);
-   while(!bExit) { Sleep(1000); }
+   while(iExit != iDoNThreads) { Sleep(1000); }
    printf("Done...\n");
    
    exit(0);
