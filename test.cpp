@@ -112,10 +112,10 @@ int _CRT_glob = 0; // 0 turns off glob (wildcards are passed in as parameters ra
 #endif
 
 #ifdef __UTIL_CPP__  // Included from. Must be defined at read.cpp beginning
-	#define EXTERNAL
+   #define EXTERNAL
    #define INIT(a) = a
 #else
-	#define EXTERNAL extern
+   #define EXTERNAL extern
    #define INIT(a)
 #endif
 
@@ -128,7 +128,7 @@ int rnd(int n) { return(rand()%(n+1)); } //0-n
 /* ===== defaults: =====
 char *FmtYYYYMMDD_HH24MISS(char *pszBuff = NULL) */
 char *FmtYYYYMMDD_HH24MISS(char *pszBuff)
-	{
+   {
    tm tmNow;
    time_t ts = time(NULL);
    memcpy(&tmNow, localtime(&ts), sizeof(tm));
@@ -138,10 +138,10 @@ char *FmtYYYYMMDD_HH24MISS(char *pszBuff)
    static char szBuff[16];
    if(!pszBuff) pszBuff = szBuff;
    snprintf(pszBuff, 16, "%04d%02d%02d_%02d%02d%02d", 
-		tmNow.tm_year, tmNow.tm_mon, tmNow.tm_mday, 
+      tmNow.tm_year, tmNow.tm_mon, tmNow.tm_mday, 
       tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec);
    return pszBuff;
-	}
+   }
 
 char *mstrrchr(char *start, char *middle, char c) //Reverse search for a character
    {
@@ -200,7 +200,7 @@ char *trimright(char *str)
    }
 
 char *trim(char *str)
-	{
+   {
    return trimleft(trimright(str));
    }
       
@@ -290,7 +290,7 @@ public:
    };
 
 class cthread
-	{
+   {
 public:
 
 #ifdef WINDOWS
@@ -298,43 +298,43 @@ public:
    HANDLE       hThread;
    HANDLE       hEvent;
 #else
-	pthread_attr_t stThreadAttributes;
-	pthread_t      stThreadID;
+   pthread_attr_t stThreadAttributes;
+   pthread_t      stThreadID;
 #endif
 
-	cthread()
-		{
-		}
+   cthread()
+      {
+      }
 
    virtual ~cthread()
-		{
-		// should we kill?
+      {
+      // should we kill?
       // should we wait?
       // should we wait a little while, then kill?
       // I suppose this one is up to the parent thread to manage, lets stay out of it.
-		}
+      }
 
 #ifdef WINDOWS
    bool create(unsigned __stdcall pfunc(void *), unsigned int iStackSizeBytes)
 #else
    bool create(void *pfunc(void *), unsigned int iStackSizeBytes)
 #endif   
-   	{
+      {
 #ifdef WINDOWS
 
-		int ErrorNumber;
-		int DOSErrorNumber;
+      int ErrorNumber;
+      int DOSErrorNumber;
 
-		hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-		hThread = (HANDLE)_beginthreadex(NULL, iStackSizeBytes, pfunc, &hEvent, 0, &uiThreadID);
-		if(hThread == 0 || !SetThreadPriority(hThread, THREAD_PRIORITY_NORMAL)) //THREAD_PRIORITY_BELOW_NORMAL //THREAD_PRIORITY_NORMAL //THREAD_PRIORITY_ABOVE_NORMAL
-			{
-			ErrorNumber = errno;
-			DOSErrorNumber = _doserrno;
-			//cerr << "Begin thread error: " << strerror(ErrorNumber) << '\n';
-			//cerr << "Begin thread DOS error code: " << DOSErrorNumber << '\n';
-			return true;
-			}
+      hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+      hThread = (HANDLE)_beginthreadex(NULL, iStackSizeBytes, pfunc, &hEvent, 0, &uiThreadID);
+      if(hThread == 0 || !SetThreadPriority(hThread, THREAD_PRIORITY_NORMAL)) //THREAD_PRIORITY_BELOW_NORMAL //THREAD_PRIORITY_NORMAL //THREAD_PRIORITY_ABOVE_NORMAL
+         {
+         ErrorNumber = errno;
+         DOSErrorNumber = _doserrno;
+         //cerr << "Begin thread error: " << strerror(ErrorNumber) << '\n';
+         //cerr << "Begin thread DOS error code: " << DOSErrorNumber << '\n';
+         return true;
+         }
          
       return false;
 #else
@@ -352,12 +352,12 @@ public:
          return true;
          }
       if(iStackSizeBytes)
-      	{
-	      status = pthread_attr_setstacksize(&stThreadAttributes, iStackSizeBytes);
-	      if (status != 0)
-	         {
-	         return true;
-	         }
+         {
+         status = pthread_attr_setstacksize(&stThreadAttributes, iStackSizeBytes);
+         if (status != 0)
+            {
+            return true;
+            }
          }
          
       //
@@ -376,17 +376,17 @@ public:
 #endif
       };
       
-	bool wait()
-		{
+   bool wait()
+      {
 #ifdef WINDOWS
       return WaitForSingleObject(hThread, INFINITE) != 0x0;
 #else
       return pthread_join(stThreadID, NULL) != 0;
 #endif
-	   }
+      }
       
-	bool kill()
-		{
+   bool kill()
+      {
 #ifdef WINDOWS
       bool bResult = false;
       if(TerminateThread(hThread, 1) != 0x0) bResult = true;
@@ -396,7 +396,7 @@ public:
 #else
       return pthread_cancel(stThreadID) != 0;
 #endif
-	   }      
+      }      
    };
 
 // ------------------------------------------------------------------------
@@ -428,87 +428,87 @@ EXTERNAL void _DBGS(char *szFile, int iLineNo, const char *szFunction, const cha
 #include <Aclapi.h>
 void SetFilePermission(LPCSTR FileName)
 {
-	PSID pEveryoneSID = NULL;
-	PACL pACL = NULL;
-	EXPLICIT_ACCESS ea[1];
-	SID_IDENTIFIER_AUTHORITY SIDAuthWorld = SECURITY_WORLD_SID_AUTHORITY;
+   PSID pEveryoneSID = NULL;
+   PACL pACL = NULL;
+   EXPLICIT_ACCESS ea[1];
+   SID_IDENTIFIER_AUTHORITY SIDAuthWorld = SECURITY_WORLD_SID_AUTHORITY;
 
-	// Create a well-known SID for the Everyone group.
-	if(!AllocateAndInitializeSid(&SIDAuthWorld, 1,
-		SECURITY_WORLD_RID,
-		0, 0, 0, 0, 0, 0, 0,
-		&pEveryoneSID)) return;
+   // Create a well-known SID for the Everyone group.
+   if(!AllocateAndInitializeSid(&SIDAuthWorld, 1,
+      SECURITY_WORLD_RID,
+      0, 0, 0, 0, 0, 0, 0,
+      &pEveryoneSID)) return;
 
-	// Initialize an EXPLICIT_ACCESS structure for an ACE.
-	ZeroMemory(&ea, 1 * sizeof(EXPLICIT_ACCESS));
-	ea[0].grfAccessPermissions = 0xFFFFFFFF;
-	ea[0].grfAccessMode = GRANT_ACCESS; //DENY_ACCESS;
-	ea[0].grfInheritance= NO_INHERITANCE;
-	ea[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	ea[0].Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
-	ea[0].Trustee.ptstrName  = (LPTSTR) pEveryoneSID;
+   // Initialize an EXPLICIT_ACCESS structure for an ACE.
+   ZeroMemory(&ea, 1 * sizeof(EXPLICIT_ACCESS));
+   ea[0].grfAccessPermissions = 0xFFFFFFFF;
+   ea[0].grfAccessMode = GRANT_ACCESS; //DENY_ACCESS;
+   ea[0].grfInheritance= NO_INHERITANCE;
+   ea[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+   ea[0].Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+   ea[0].Trustee.ptstrName  = (LPTSTR) pEveryoneSID;
 
-	// Create a new ACL that contains the new ACEs.
-	if(SetEntriesInAclA(1, ea, NULL, &pACL) != ERROR_SUCCESS) 
-		{
-		FreeSid(pEveryoneSID);
-		return;
-		}
-
-	// Initialize a security descriptor.  
-	PSECURITY_DESCRIPTOR pSD = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR, 
-		SECURITY_DESCRIPTOR_MIN_LENGTH); 
-	if(!pSD)
-   	{
-   	FreeSid(pEveryoneSID);
+   // Create a new ACL that contains the new ACEs.
+   if(SetEntriesInAclA(1, ea, NULL, &pACL) != ERROR_SUCCESS) 
+      {
+      FreeSid(pEveryoneSID);
       return;
       }
 
-	if(!InitializeSecurityDescriptor(pSD,SECURITY_DESCRIPTOR_REVISION)) 
-		{
-		FreeSid(pEveryoneSID);
-		LocalFree(pACL);
-		return;
-		}
+   // Initialize a security descriptor.  
+   PSECURITY_DESCRIPTOR pSD = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR, 
+      SECURITY_DESCRIPTOR_MIN_LENGTH); 
+   if(!pSD)
+      {
+      FreeSid(pEveryoneSID);
+      return;
+      }
 
-	// Add the ACL to the security descriptor. 
-	if(!SetSecurityDescriptorDacl(pSD, 
-		TRUE,     // bDaclPresent flag   
-		pACL, 
-		FALSE))   // not a default DACL 
-		{
-		FreeSid(pEveryoneSID);
-		LocalFree(pACL);
-		return;      	
-		}
+   if(!InitializeSecurityDescriptor(pSD,SECURITY_DESCRIPTOR_REVISION)) 
+      {
+      FreeSid(pEveryoneSID);
+      LocalFree(pACL);
+      return;
+      }
 
-	//Change the security attributes
-	if(!SetFileSecurityA(FileName, DACL_SECURITY_INFORMATION, pSD)) 
-		{
-		FreeSid(pEveryoneSID);
-		LocalFree(pACL);
-		LocalFree(pSD);
-		}
+   // Add the ACL to the security descriptor. 
+   if(!SetSecurityDescriptorDacl(pSD, 
+      TRUE,     // bDaclPresent flag   
+      pACL, 
+      FALSE))   // not a default DACL 
+      {
+      FreeSid(pEveryoneSID);
+      LocalFree(pACL);
+      return;        
+      }
 
-	FreeSid(pEveryoneSID);
-	LocalFree(pACL);
-	LocalFree(pSD);
+   //Change the security attributes
+   if(!SetFileSecurityA(FileName, DACL_SECURITY_INFORMATION, pSD)) 
+      {
+      FreeSid(pEveryoneSID);
+      LocalFree(pACL);
+      LocalFree(pSD);
+      }
+
+   FreeSid(pEveryoneSID);
+   LocalFree(pACL);
+   LocalFree(pSD);
 }
 #endif
 
 void CreateAccessable(char *pFile)
-	{
+   {
 #ifdef WINDOWS      
    FILE *fp = fopen(pFile, "a+b");
    if(fp) fclose(fp); // Yup, really have to do it after...   
-	///////////////////////////// still has popup
+   ///////////////////////////// still has popup
    //char szCmd[2048*2];
    //snprintf(szCmd, sizeof(szCmd), "cacls.exe \"%s\" /e /p Everyone:F", pFile);   
    //WinExec(szCmd, SW_HIDE);      
    ///////////////////////////// do following instead...   
-	SetFilePermission(pFile);   
+   SetFilePermission(pFile);   
 #endif
-	//int fd=open(pFile, (mode_t)0777, "a+b"); // no effect, hmmm.
+   //int fd=open(pFile, (mode_t)0777, "a+b"); // no effect, hmmm.
    //if(fd) close(fd);
    }
 
@@ -516,7 +516,7 @@ void _DBG_Wait()
    {
    static bool bMutexInit = false;   
    if(bMutexInit == false)
-   	{
+      {
       _DBG_OutputMutex.init();
       bMutexInit = true;
       }
@@ -563,7 +563,7 @@ void _DBG_WithFile(char *szFile, int iLineNo, const char *szFunction)
          char szFile[2048];
          snprintf(szFile, sizeof(szFile), "%s_%04d%02d%02d.log", 
             _DBG_BaseFileName, stTime.tm_year, stTime.tm_mon, stTime.tm_mday);
-			CreateAccessable(szFile);
+         CreateAccessable(szFile);
          if(!(_DBG_fd = fopen(szFile, "a+b")))
             {
             fprintf(stderr, "Could not open [%s] for write appaned.\n", szFile);
@@ -603,7 +603,7 @@ void _DBGS_WithFile(char *szFile, int iLineNo, const char *szFunction, const cha
    va_end (argptr);
 
    if(_DBG_bSendToScreen)
-   	{
+      {
       printf("%04d/%02d/%02d %02d:%02d:%02d %s: %d: %s: %s\n", 
          stTime.tm_year, stTime.tm_mon, stTime.tm_mday, 
          stTime.tm_hour, stTime.tm_min, stTime.tm_sec,
@@ -611,7 +611,7 @@ void _DBGS_WithFile(char *szFile, int iLineNo, const char *szFunction, const cha
       if(_DBG_flush) {fflush(stdout); fflush(stderr);}
       }
    if(!_DBG_bSendToFile)
-   	{
+      {
       _DBG_Proceed();
       return;
       }
@@ -679,7 +679,7 @@ typedef struct mstrtok_typ
 //     char szBuff[100] = {0x0}
 //     sprintf(szBuff, " $% Hello, World. Example  " );
 //     
-//     mstrtok m0;	   
+//     mstrtok m0;      
 //     for(char *szPtr = m0.mstrtok( szBuff, " $%,."); szPtr!=NULL; szPtr=m0.mstrtok())
 //     {
 //          printf("\"%s\"\n",szPtr);
@@ -696,9 +696,9 @@ typedef struct mstrtok_typ
 //
 //  OTHER:
 //
-//		m0.cToken = the token to the right of the returned string
-//		m0.cTokenPrev = the token to the left of the returned string
-//	
+//    m0.cToken = the token to the right of the returned string
+//    m0.cTokenPrev = the token to the left of the returned string
+// 
 //  NOTE: This was optimized almost to assembly, there is a newer version 
 //        but the additinal features really arn't needed for this applciation.
 //
@@ -718,11 +718,11 @@ typedef struct mstrtok_typ
 /* === Default ===
 char *mstrtok::mstrtok(const char *pszInStr = NULL, const char *pszInTokens = NULL) */
 char *mstrtok::mstrtok(const char *pszInStr, const char *pszInTokens)
-   {	
+   {  
    char *pszReturnStr;
 
    if(pszInStr==NULL)
-      {         	
+      {           
       if(pToken == NULL) return NULL;
       *pToken = cToken;
       while(*pToken)
@@ -815,11 +815,11 @@ char *mstrtok::mstrtok(const char *pszInStr, const char *pszInTokens)
       }
    return NULL; //shouldnt happen
    }
-	   
+      
 /* === Default ===
 char *mstrtok::mstrrtok(const char *pszInStr = NULL, const char *pszInTokens = NULL) */
 char *mstrtok::mstrrtok(const char *pszInStr, const char *pszInTokens)
-	{     
+   {     
    char *pszReturnStr;
 
    if(pszInStr==NULL)
@@ -910,7 +910,7 @@ char *mstrtok::mstrrtok(const char *pszInStr, const char *pszInTokens)
       if(pszCurrInStrPos_2==os_2)
          pszCurrInStrPos_2 = NULL;
       else
-         cTokenPrev = *pTokenPrev;	            
+         cTokenPrev = *pTokenPrev;              
       return pszReturnStr;
       }
    return NULL; //shouldnt happen
@@ -968,9 +968,9 @@ static unsigned long rnd3_x=123456789;
 static unsigned long rnd3_y=362436069;
 static unsigned long rnd3_z=521288629;
 unsigned long rnd3(unsigned long n) //xorshf96(void) 
-	{          
+   {          
    //period 2^96-1
-	unsigned long t;
+   unsigned long t;
    rnd3_x ^= rnd3_x << 16;
    rnd3_x ^= rnd3_x >> 5;
    rnd3_x ^= rnd3_x << 1;
@@ -978,15 +978,15 @@ unsigned long rnd3(unsigned long n) //xorshf96(void)
    rnd3_x = rnd3_y;
    rnd3_y = rnd3_z;
    rnd3_z = t ^ rnd3_x ^ rnd3_y;
-	return rnd3_z % (n+1);
-	}
+   return rnd3_z % (n+1);
+   }
 
 inline unsigned int rnd4(unsigned int n)
-	{ 
-  	static unsigned int g_seed = time(NULL);
-  	g_seed = (214013*g_seed+2531011); 
-  	return ((g_seed>>16)&0x7FFF)%(n+1);
-	}
+   { 
+   static unsigned int g_seed = time(NULL);
+   g_seed = (214013*g_seed+2531011); 
+   return ((g_seed>>16)&0x7FFF)%(n+1);
+   }
 
 //
 // This one is off an Intel website. Interesting...
@@ -1001,53 +1001,53 @@ void srand_sse(unsigned int seed);
 void rand_sse(unsigned int *);
 void initrnd5() { srand_sse((unsigned)time(NULL)); }
 unsigned int rnd5(unsigned int n) 
-	{ 
-	unsigned int iResult;
-	rand_sse(&iResult); //0-n
+   { 
+   unsigned int iResult;
+   rand_sse(&iResult); //0-n
    return iResult%(n+1);
    }
 __declspec( align(16) ) static __m128i cur_seed;
 void srand_sse(unsigned int seed)
-	{ cur_seed = _mm_set_epi32(seed, seed+1, seed, seed+1); }
+   { cur_seed = _mm_set_epi32(seed, seed+1, seed, seed+1); }
 inline void rand_sse(unsigned int *result)
-	{
-	__declspec( align(16) ) __m128i cur_seed_split;
-	__declspec( align(16) ) __m128i multiplier;
-	__declspec( align(16) ) __m128i adder;
-	__declspec( align(16) ) __m128i mod_mask;
-	__declspec( align(16) ) __m128i sra_mask;
-	__declspec( align(16) ) __m128i sseresult;
-	__declspec( align(16) ) static const unsigned int mult[4] =
-		{ 214013, 17405, 214013, 69069 };
-	__declspec( align(16) ) static const unsigned int gadd[4] =
-		{ 2531011, 10395331, 13737667, 1 };
-	__declspec( align(16) ) static const unsigned int mask[4] =
-		{ 0xFFFFFFFF, 0, 0xFFFFFFFF, 0 };
-	__declspec( align(16) ) static const unsigned int masklo[4] =
-		{ 0x00007FFF, 0x00007FFF, 0x00007FFF, 0x00007FFF };
-	adder = _mm_load_si128( (__m128i*) gadd);
-	multiplier = _mm_load_si128( (__m128i*) mult);
-	mod_mask = _mm_load_si128( (__m128i*) mask);
-	sra_mask = _mm_load_si128( (__m128i*) masklo);
-	cur_seed_split = _mm_shuffle_epi32( cur_seed, _MM_SHUFFLE( 2, 3, 0, 1 ) );
-	cur_seed = _mm_mul_epu32( cur_seed, multiplier );
-	multiplier = _mm_shuffle_epi32( multiplier, _MM_SHUFFLE( 2, 3, 0, 1 ) );
-	cur_seed_split = _mm_mul_epu32( cur_seed_split, multiplier );
-	cur_seed = _mm_and_si128( cur_seed, mod_mask);
-	cur_seed_split = _mm_and_si128( cur_seed_split, mod_mask );
-	cur_seed_split = _mm_shuffle_epi32( cur_seed_split, _MM_SHUFFLE( 2, 3, 0, 1 ) );
-	cur_seed = _mm_or_si128( cur_seed, cur_seed_split );
-	cur_seed = _mm_add_epi32( cur_seed, adder);
-	#ifdef COMPATABILITY
-	// Add the lines below if you wish to reduce your results to 16-bit vals...
-	sseresult = _mm_srai_epi32( cur_seed, 16);
-	sseresult = _mm_and_si128( sseresult, sra_mask );
-	_mm_storeu_si128( (__m128i*) result, sseresult );
-	return;
-	#endif
-	_mm_storeu_si128( (__m128i*) result, cur_seed);
-	return;
-	}
+   {
+   __declspec( align(16) ) __m128i cur_seed_split;
+   __declspec( align(16) ) __m128i multiplier;
+   __declspec( align(16) ) __m128i adder;
+   __declspec( align(16) ) __m128i mod_mask;
+   __declspec( align(16) ) __m128i sra_mask;
+   __declspec( align(16) ) __m128i sseresult;
+   __declspec( align(16) ) static const unsigned int mult[4] =
+      { 214013, 17405, 214013, 69069 };
+   __declspec( align(16) ) static const unsigned int gadd[4] =
+      { 2531011, 10395331, 13737667, 1 };
+   __declspec( align(16) ) static const unsigned int mask[4] =
+      { 0xFFFFFFFF, 0, 0xFFFFFFFF, 0 };
+   __declspec( align(16) ) static const unsigned int masklo[4] =
+      { 0x00007FFF, 0x00007FFF, 0x00007FFF, 0x00007FFF };
+   adder = _mm_load_si128( (__m128i*) gadd);
+   multiplier = _mm_load_si128( (__m128i*) mult);
+   mod_mask = _mm_load_si128( (__m128i*) mask);
+   sra_mask = _mm_load_si128( (__m128i*) masklo);
+   cur_seed_split = _mm_shuffle_epi32( cur_seed, _MM_SHUFFLE( 2, 3, 0, 1 ) );
+   cur_seed = _mm_mul_epu32( cur_seed, multiplier );
+   multiplier = _mm_shuffle_epi32( multiplier, _MM_SHUFFLE( 2, 3, 0, 1 ) );
+   cur_seed_split = _mm_mul_epu32( cur_seed_split, multiplier );
+   cur_seed = _mm_and_si128( cur_seed, mod_mask);
+   cur_seed_split = _mm_and_si128( cur_seed_split, mod_mask );
+   cur_seed_split = _mm_shuffle_epi32( cur_seed_split, _MM_SHUFFLE( 2, 3, 0, 1 ) );
+   cur_seed = _mm_or_si128( cur_seed, cur_seed_split );
+   cur_seed = _mm_add_epi32( cur_seed, adder);
+   #ifdef COMPATABILITY
+   // Add the lines below if you wish to reduce your results to 16-bit vals...
+   sseresult = _mm_srai_epi32( cur_seed, 16);
+   sseresult = _mm_and_si128( sseresult, sra_mask );
+   _mm_storeu_si128( (__m128i*) result, sseresult );
+   return;
+   #endif
+   _mm_storeu_si128( (__m128i*) result, cur_seed);
+   return;
+   }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 // OLL recognition for the application. 
@@ -2279,11 +2279,11 @@ inline bool bMovesCompatable_v3(char a, char b)
    {
    if(a == b) return false;
    if(a > b) 
-   	{ 
+      { 
       if(a - b >= 3) return true; 
       if((b % 3) > (a % 3))
          return true;
-		return false;
+      return false;
       }
    if(b - a >= 3) return true;
    if((a % 3) > (b % 3))
@@ -2382,30 +2382,30 @@ void ByteToASCII(char *pIn, int iInCount, char *pOut)
    }
 
 bool IsPrime_v1(int n) // slow
-	{
-	int i, m = 0, flag = 0;
-	m = n / 2;
-	for(i = 2; i <= m; i++)
-		if(n % i == 0)
-			return false;
-	if(flag==0)
-		return true;
+   {
+   int i, m = 0, flag = 0;
+   m = n / 2;
+   for(i = 2; i <= m; i++)
+      if(n % i == 0)
+         return false;
+   if(flag==0)
+      return true;
    return false;
-	}  
+   }  
 
 bool IsPrime(int n) 
-	{
-	if(n == 1)	return false;
-	int i = 2;
-	while(i*i <= n) 
-		{
-		if(n % i == 0) return false;
+   {
+   if(n == 1)  return false;
+   int i = 2;
+   while(i*i <= n) 
+      {
+      if(n % i == 0) return false;
             // This means that n has a factor in between 2 and sqrt(n)
             // So it is not a prime number
       i += 1;
-		}
-	return true;
-	}
+      }
+   return true;
+   }
 
 time_t tAppStart;
 
@@ -2429,42 +2429,42 @@ int main(int argc, char **argv)
 #endif
 
 #if 0 
-	//
-	// For testing/development random performance related items...
    //
-		{
-		auto start = std::chrono::high_resolution_clock::now();
-		int iCounter = 100000000;
-	   while(iCounter--)
-	      {
-	      int a = rnd4(18);
-	      int b = rnd4(18);
-	      //bMovesCompatable_v2(a,b); //<--- v2 seems better
-	      if(bMovesCompatable_v2(a,b) != bMovesCompatable_v4(a,b))
-	      	printf("Owh No!\n");
-	      //if(bMovesCompatable_v2(a,b))
-	         //if(max(a,b) - min(a,b) < 3)
-	            //printf("a=%d   b=%d\n", a, b);
-	      }
-	   auto end = std::chrono::high_resolution_clock::now();
-	   std::chrono::duration<double> diff = end-start;   
-	   printf("After 100000000 diff = %.5f, so thats %llu per second\n", 
-	      diff, (unsigned long long)(((double)1.0/(double)diff.count())*(double)100000000.0));
-	   printf("Done...\n");
-	   exit(0);
-	   }
+   // For testing/development random performance related items...
+   //
+      {
+      auto start = std::chrono::high_resolution_clock::now();
+      int iCounter = 100000000;
+      while(iCounter--)
+         {
+         int a = rnd4(18);
+         int b = rnd4(18);
+         //bMovesCompatable_v2(a,b); //<--- v2 seems better
+         if(bMovesCompatable_v2(a,b) != bMovesCompatable_v4(a,b))
+            printf("Owh No!\n");
+         //if(bMovesCompatable_v2(a,b))
+            //if(max(a,b) - min(a,b) < 3)
+               //printf("a=%d   b=%d\n", a, b);
+         }
+      auto end = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> diff = end-start;   
+      printf("After 100000000 diff = %.5f, so thats %llu per second\n", 
+         diff, (unsigned long long)(((double)1.0/(double)diff.count())*(double)100000000.0));
+      printf("Done...\n");
+      exit(0);
+      }
 #endif
 
    tAppStart = time(NULL);   
-	initrnd5();
+   initrnd5();
 
-	//
-	// Initialize the OLL recognition map
-	//
+   //
+   // Initialize the OLL recognition map
+   //
    for(int iA=0; iA<57; ++iA)
       mOLL.insert(std::pair<std::string, int>{(char*)aOLL[iA], iA});
 
-	//
+   //
    // Initialize the mPossibleMoves map
    //
    mstrtok mtok;
@@ -2474,9 +2474,9 @@ int main(int argc, char **argv)
       iPossibleMoves++;
       }
         
-	DBG();
-	if(argc == 2 && stricmp(argv[1], "-h")==0)
-   	{
+   DBG();
+   if(argc == 2 && stricmp(argv[1], "-h")==0)
+      {
       printf("Rubiks Cube 3x3x3 One Look Last Layer (1LLL) Algorithm Generator.\n");
       printf("Copyright 2020 by Matthew Pappas, all rights reserved.\n");
       printf("%s.exe [options] \n", szArgv0);
@@ -2507,12 +2507,12 @@ int main(int argc, char **argv)
       printf("Examples:\n");
       printf("  %s.exe -stop 17 17 17 17 17 17\n", szArgv0);
       printf("  type 1\\* > input.txt\n");
-		printf("  %s.exe -f input.txt -k -stop 17 17 17 17 17 17 1\n", szArgv0);
-		printf("  %s.exe -f input.txt -k\n", szArgv0);
-		printf("  %s.exe -f input.txt -r\n", szArgv0);
-		printf("  %s.exe -m3 -f input.txt -r\n", szArgv0);
+      printf("  %s.exe -f input.txt -k -stop 17 17 17 17 17 17 1\n", szArgv0);
+      printf("  %s.exe -f input.txt -k\n", szArgv0);
+      printf("  %s.exe -f input.txt -r\n", szArgv0);
+      printf("  %s.exe -m3 -f input.txt -r\n", szArgv0);
       printf("  type 1\\* 2\\* 3\\* > input.txt\n");
-		printf("  %s.exe -f input.txt\n", szArgv0);
+      printf("  %s.exe -f input.txt\n", szArgv0);
       printf("  It takes 4-5 minutes on an i3 to generate all 16416 1LLLs with 1 thread,\n");
       printf("  however it takes time and lots of CPUs to shorten the algorithms,\n");
       printf("  merging all the data daily and restarting.\n");
@@ -2603,9 +2603,9 @@ int main(int argc, char **argv)
                {
                m_cOptionR = 1;
                if(strlen(argv[iA]) > 2)
-               	cOptionR_rnd_value = atoi(&argv[iA][2]);
-					if(strchr(argv[iA], ','))
-               	cOptionR_add_value = atoi(strchr(argv[iA], ',')+1);
+                  cOptionR_rnd_value = atoi(&argv[iA][2]);
+               if(strchr(argv[iA], ','))
+                  cOptionR_add_value = atoi(strchr(argv[iA], ',')+1);
                }
             }
          }
@@ -2654,20 +2654,20 @@ int main(int argc, char **argv)
 
       for(int iA=1; iA<argc; ++iA) 
          if(strncmp(argv[iA], "-m", 2)==0)
-         	{
- 				iDoNThreads = atoi(&argv[iA][2]);
+            {
+            iDoNThreads = atoi(&argv[iA][2]);
             if(iDoNThreads < 1) iDoNThreads = 1;
             break;
             }
                         
-		//
+      //
       // Misc
       //
-		if(m_bOptionS && bOptionK)
-	   	{
-	   	bReenableOptionS_at_K = true;
-	      m_bOptionS = false;
-	      }
+      if(m_bOptionS && bOptionK)
+         {
+         bReenableOptionS_at_K = true;
+         m_bOptionS = false;
+         }
       } 
 
    aState = (char*)malloc(6*3*3);
@@ -2680,19 +2680,19 @@ int main(int argc, char **argv)
       "wwwwwwwww"   //D 5
       , 6*3*3);
 
-	m_iThreadNum = 0;
+   m_iThreadNum = 0;
    for(int iN = 0; iN<iDoNThreads; ++iN)
-	   {
-		bThreadReady = false;
+      {
+      bThreadReady = false;
       m_iThreadNum++;
-	   cthread cThread;
-	   if(cThread.create([](void*) -> unsigned int 
-	      { 
-	      int iThreadNum = m_iThreadNum;
-			bool bFirst = m_bFirst;
-	      bool bOptionF = m_bOptionF;
-	      char cOptionR = m_cOptionR;
-	      bool bOptionS = m_bOptionS;
+      cthread cThread;
+      if(cThread.create([](void*) -> unsigned int 
+         { 
+         int iThreadNum = m_iThreadNum;
+         bool bFirst = m_bFirst;
+         bool bOptionF = m_bOptionF;
+         char cOptionR = m_cOptionR;
+         bool bOptionS = m_bOptionS;
          //
          // Prime numbers. (SAVE TO FILE, THIS TAKES WAY TOO LONG!).
          //
@@ -2700,20 +2700,20 @@ int main(int argc, char **argv)
          int iPrimesTo = 10000000;
          std::vector<unsigned int> vPrimes;
          printf(".Calculating primes to %d\n", iPrimesTo); fflush(stdout);
-			for(int iA=2; iA<=iPrimesTo; ++iA)
-				if(IsPrime(iA))
-            	{
+         for(int iA=2; iA<=iPrimesTo; ++iA)
+            if(IsPrime(iA))
+               {
                vPrimes.push_back(iA); //aPrimes[iB++] = iA;
                //if((vPrimes.size() % 66000) == 0)
-						//printf(".%d is prime...\n", iA); fflush(stdout); // I need a few of these...
+                  //printf(".%d is prime...\n", iA); fflush(stdout); // I need a few of these...
                }
          aPrimes = (unsigned int *)&vPrimes[0];
          int iNumPrimes = vPrimes.size();         
-			printf(".Done Calculating primes to %d. Found %d primes.\n", iPrimesTo, iNumPrimes); fflush(stdout);
-	      unsigned int g_seed1 = tAppStart * GetCurrentThreadId();
-	      unsigned int g_seed2 = g_seed1 * 827719;
-	      unsigned int g_seed3 = g_seed2 * 1755563;
-	      unsigned int g_seed4 = g_seed3 * 2719631;
+         printf(".Done Calculating primes to %d. Found %d primes.\n", iPrimesTo, iNumPrimes); fflush(stdout);
+         unsigned int g_seed1 = tAppStart * GetCurrentThreadId();
+         unsigned int g_seed2 = g_seed1 * 827719;
+         unsigned int g_seed3 = g_seed2 * 1755563;
+         unsigned int g_seed4 = g_seed3 * 2719631;
          char iPool = 0;
          int iNumPrimes1 = vPrimes.size();
          int iNumPrimes2 = vPrimes.size() - 1;
@@ -2723,178 +2723,178 @@ int main(int argc, char **argv)
          #define localrnd2(n) ((g_seed2=aPrimes[g_seed2%iNumPrimes2]*g_seed2+4716053)%(n+1))
          #define localrnd3(n) ((g_seed3=aPrimes[g_seed3%iNumPrimes3]*g_seed3+5737393)%(n+1))
          #define localrnd4(n) ((g_seed4=aPrimes[g_seed4%iNumPrimes4]*g_seed4+6770161)%(n+1))
-			#define localrnd(n) (((iPool=(iPool+1)%4)==0)?localrnd1(n):(iPool==1)?localrnd2(n):(iPool==2)?localrnd3(n):localrnd4(n))
-	      bThreadReady = true;
-	      
-			std::map<std::string, Primary_T> mPrimary; // 1LLL color chart is first, second is Primary_T has OLL # and solution.
+         #define localrnd(n) (((iPool=(iPool+1)%4)==0)?localrnd1(n):(iPool==1)?localrnd2(n):(iPool==2)?localrnd3(n):localrnd4(n))
+         bThreadReady = true;
+         
+         std::map<std::string, Primary_T> mPrimary; // 1LLL color chart is first, second is Primary_T has OLL # and solution.
          std::map<std::string, Primary_T>::iterator aPrimary[16416];
          int iaPrimary_Curr = 0;
-			std::map<int, int> mCountPerOLL; // Count how many 1LLL'ers we found per OLL
-			int iMaxMoves = 1;
-			char *aMoves = NULL;
-		   aMoves = (char*)malloc(60);
-		   memset(aMoves, 0, 60);
-		   int  iRndBuff_ActualSize =  12000+30;    //65536*60*3;
-		   char *szRndBuff = (char*)malloc(iRndBuff_ActualSize);
-		   int iRndBuffSize = 0;
-	      int ir4CountDown = 1;
+         std::map<int, int> mCountPerOLL; // Count how many 1LLL'ers we found per OLL
+         int iMaxMoves = 1;
+         char *aMoves = NULL;
+         aMoves = (char*)malloc(60);
+         memset(aMoves, 0, 60);
+         int  iRndBuff_ActualSize =  12000+30;    //65536*60*3;
+         char *szRndBuff = (char*)malloc(iRndBuff_ActualSize);
+         int iRndBuffSize = 0;
+         int ir4CountDown = 1;
          int ir4CountDownMAX =        5000; // major design change... lets try it...
          //int ir4CountDownMAX =   8000000; // okay, fast again. live
          //int ir4CountDownMAX =  10000000; // okay, fast again. live
          //int ir4CountDownMAX =  80000000; // original value
          //int ir4CountDownMAX =    400000; // fast at first, but doesnt find all 16416 1LLLs in 1st 9 min.
          //int ir4CountDownMAX =   4000000; // was live, nothing found
-	      char cFoundAllMax = 0;
-	      bool bReadingIn = true;
-	      std::deque<std::string> dqScrambles; // Process the file backwards
-	      
-	      // Omit processing what we already processed. (saves about a seconds)
-	      typedef struct Node_T
-	      	{
-	         char aMoves[60];
-	         int iMaxMoves;
-	      	};
-	      auto hash = [](const Node_T& n)
-	         {
-	         size_t r = 0;
-	         for(char iA=0; iA<n.iMaxMoves; ++iA)
-	            r = (r<<5)+(n.aMoves[iA]+1);
-	         return std::hash<unsigned long long>()(r);
-	         };
-	      auto equal = [](const Node_T& l, const Node_T& r)
-	         {
-	         if(l.iMaxMoves != r.iMaxMoves) return false;
-	         return memcmp(l.aMoves, r.aMoves, r.iMaxMoves)?false:true;
-	         };
-	      std::unordered_map<Node_T, char, decltype(hash), decltype(equal)> hmOmit(5, hash, equal); //m(8, hash, equal);
-	
-		   char *aState1 = (char*)malloc(6*3*3);
-		   char *aState2 = (char*)malloc(6*3*3);
-		   register char *pCurrState;
+         char cFoundAllMax = 0;
+         bool bReadingIn = true;
+         std::deque<std::string> dqScrambles; // Process the file backwards
+         
+         // Omit processing what we already processed. (saves about a seconds)
+         typedef struct Node_T
+            {
+            char aMoves[60];
+            int iMaxMoves;
+            };
+         auto hash = [](const Node_T& n)
+            {
+            size_t r = 0;
+            for(char iA=0; iA<n.iMaxMoves; ++iA)
+               r = (r<<5)+(n.aMoves[iA]+1);
+            return std::hash<unsigned long long>()(r);
+            };
+         auto equal = [](const Node_T& l, const Node_T& r)
+            {
+            if(l.iMaxMoves != r.iMaxMoves) return false;
+            return memcmp(l.aMoves, r.aMoves, r.iMaxMoves)?false:true;
+            };
+         std::unordered_map<Node_T, char, decltype(hash), decltype(equal)> hmOmit(5, hash, equal); //m(8, hash, equal);
+   
+         char *aState1 = (char*)malloc(6*3*3);
+         char *aState2 = (char*)malloc(6*3*3);
+         register char *pCurrState;
 
-		   char szFile[2048];
-		   FILE *fdOLL[57]; // ignoring 0th
-		   for(int iA=0; iA<57; ++iA)
-		      {
-	         snprintf(szFile, sizeof(szFile), "%d", iThreadNum);
-	         mkdir(szFile);
-		      snprintf(szFile, sizeof(szFile), "%d\\%s_oll_%02d.txt", iThreadNum, szArgv0, iA+1);
-		      fdOLL[iA] = fopen(szFile, "a+b");
-		      }
-	      
-	      FILE *fpOptionF = NULL;
-	      if(bOptionF) fpOptionF = fopen(szOptionF_File, "rb");
-	      
-		   int iBench = -1;
-		   int iBench2 = 0;
-		   int iFoundCount = 0;
-		   auto start = std::chrono::high_resolution_clock::now();
-		   while(1)
-		      {
-		      iBench++;
-		      if((iBench % 10000000) == 0) 
-		         { 
-		         auto end = std::chrono::high_resolution_clock::now();
-		         std::chrono::duration<double> diff = end-start;
-		         if(iMaxMoves-2 >= 0)
-		            { 
-		            DBGS(".%d.%2.2s%2.2s.diff[%.3f].combos per sec[%llu].Found[%d].Unique1LLLs[%d]",
-                  	iMaxMoves, mPossibleMoves.find(aMoves[iMaxMoves-2])->second, 
-		            	mPossibleMoves.find(aMoves[iMaxMoves-1])->second, diff,
-		               (unsigned long long)(((double)1.0/(double)diff.count())*(double)10000000.0), iFoundCount,
+         char szFile[2048];
+         FILE *fdOLL[57]; // ignoring 0th
+         for(int iA=0; iA<57; ++iA)
+            {
+            snprintf(szFile, sizeof(szFile), "%d", iThreadNum);
+            mkdir(szFile);
+            snprintf(szFile, sizeof(szFile), "%d\\%s_oll_%02d.txt", iThreadNum, szArgv0, iA+1);
+            fdOLL[iA] = fopen(szFile, "a+b");
+            }
+         
+         FILE *fpOptionF = NULL;
+         if(bOptionF) fpOptionF = fopen(szOptionF_File, "rb");
+         
+         int iBench = -1;
+         int iBench2 = 0;
+         int iFoundCount = 0;
+         auto start = std::chrono::high_resolution_clock::now();
+         while(1)
+            {
+            iBench++;
+            if((iBench % 10000000) == 0) 
+               { 
+               auto end = std::chrono::high_resolution_clock::now();
+               std::chrono::duration<double> diff = end-start;
+               if(iMaxMoves-2 >= 0)
+                  { 
+                  DBGS(".%d.%2.2s%2.2s.diff[%.3f].combos per sec[%llu].Found[%d].Unique1LLLs[%d]",
+                     iMaxMoves, mPossibleMoves.find(aMoves[iMaxMoves-2])->second, 
+                     mPossibleMoves.find(aMoves[iMaxMoves-1])->second, diff,
+                     (unsigned long long)(((double)1.0/(double)diff.count())*(double)10000000.0), iFoundCount,
                      mPrimary.size());
-		            }
-		         start = std::chrono::high_resolution_clock::now();
-		         } 
-		      if(iBench >= 1000000000)
-		         {
-		         iBench = 0;
-		         iBench2++;
-		         }
-		               
-		      if(bOptionF)
-		         {
-		         if(cOptionR == 2) // once all fgets is done, we can start playing with the algs.
-		            {	
-		            ir4CountDown--;
-		            if(ir4CountDown == 0)
-		               {
-		               ir4CountDown = ir4CountDownMAX;                     
-							if(iaPrimary_Curr)
-	                     {
+                  }
+               start = std::chrono::high_resolution_clock::now();
+               } 
+            if(iBench >= 1000000000)
+               {
+               iBench = 0;
+               iBench2++;
+               }
+                     
+            if(bOptionF)
+               {
+               if(cOptionR == 2) // once all fgets is done, we can start playing with the algs.
+                  {  
+                  ir4CountDown--;
+                  if(ir4CountDown == 0)
+                     {
+                     ir4CountDown = ir4CountDownMAX;                     
+                     if(iaPrimary_Curr)
+                        {
                         iRndBuffSize = 0;
                         while(iRndBuffSize < 60)
-	                        {
-		                     auto iter1 = &aPrimary[localrnd(iaPrimary_Curr-1)];		
-		                     // Ensure compatable moves within entire buffer.
-		                     // forwards and backwards...
-		                     char cFwd = localrnd(1);
-		                     char cNew = (*iter1)->second.aMovesScramble[cFwd?0:(*iter1)->second.iMoveCount-1];
-		                     if(iRndBuffSize)
-		                        {
-		                        char cPrev = szRndBuff[iRndBuffSize-1];
-		                        if(!bMovesCompatable_v2(cPrev, cNew))
-		                           {
-		                           char cMid = localrnd(iPossibleMoves-1);
-		                           for(; !(bMovesCompatable_v2(cPrev, cMid) && bMovesCompatable_v2(cMid, cNew)); )
-		                              cMid = localrnd(iPossibleMoves-1);
-		                           szRndBuff[iRndBuffSize++] = cMid;
-		                           }
-		                        }
-		                     szRndBuff[iRndBuffSize++] = cNew;
-		                     for(int iA=1; iA<(*iter1)->second.iMoveCount; ++iA)
-										szRndBuff[iRndBuffSize++] = (*iter1)->second.aMovesScramble[cFwd?iA:(*iter1)->second.iMoveCount-iA-1];
-									}
+                           {
+                           auto iter1 = &aPrimary[localrnd(iaPrimary_Curr-1)];      
+                           // Ensure compatable moves within entire buffer.
+                           // forwards and backwards...
+                           char cFwd = localrnd(1);
+                           char cNew = (*iter1)->second.aMovesScramble[cFwd?0:(*iter1)->second.iMoveCount-1];
+                           if(iRndBuffSize)
+                              {
+                              char cPrev = szRndBuff[iRndBuffSize-1];
+                              if(!bMovesCompatable_v2(cPrev, cNew))
+                                 {
+                                 char cMid = localrnd(iPossibleMoves-1);
+                                 for(; !(bMovesCompatable_v2(cPrev, cMid) && bMovesCompatable_v2(cMid, cNew)); )
+                                    cMid = localrnd(iPossibleMoves-1);
+                                 szRndBuff[iRndBuffSize++] = cMid;
+                                 }
+                              }
+                           szRndBuff[iRndBuffSize++] = cNew;
+                           for(int iA=1; iA<(*iter1)->second.iMoveCount; ++iA)
+                              szRndBuff[iRndBuffSize++] = (*iter1)->second.aMovesScramble[cFwd?iA:(*iter1)->second.iMoveCount-iA-1];
+                           }
                         for(int iA=iRndBuffSize-2; iA>=0; --iA)
-                        	szRndBuff[iRndBuffSize++] = szRndBuff[iA];
+                           szRndBuff[iRndBuffSize++] = szRndBuff[iA];
                         }                        
-		               }
+                     }
 
-						//
+                  //
                   // Okay now try a random combination of moves made from the best stuff on earth.
                   //
 #if 1
-		            if(cOptionR_rnd_value != -1)
-		               {
-		               if(cOptionR_add_value != -1)
-		                  iMaxMoves = localrnd(cOptionR_rnd_value)+cOptionR_add_value;
-		               else
-		                  iMaxMoves = localrnd(cOptionR_rnd_value);
-		               }
-		            else 
-		               iMaxMoves = localrnd((cFoundAllMax?cFoundAllMax:30)-6)+6;
+                  if(cOptionR_rnd_value != -1)
+                     {
+                     if(cOptionR_add_value != -1)
+                        iMaxMoves = localrnd(cOptionR_rnd_value)+cOptionR_add_value;
+                     else
+                        iMaxMoves = localrnd(cOptionR_rnd_value);
+                     }
+                  else 
+                     iMaxMoves = localrnd((cFoundAllMax?cFoundAllMax:30)-6)+6;
                   register char *pJmpTo =  &szRndBuff[localrnd(60)];
                   register char *pRndPos = &szRndBuff[localrnd(60)];
-		            register char iRndJmp = localrnd(iMaxMoves-1)+1;
-		            register char iMM = iMaxMoves;
-		            for(register char iA=0; iA<iMM; iA++)
-		               {
-		               if(iRndJmp == iA)
-		                  {
-		                  pRndPos = pJmpTo;
-		                  if(!bMovesCompatable_v2(*pRndPos, aMoves[iA-1])) pRndPos++;
-		                  for(; iA<iMM; iA++)
-		                     aMoves[iA] = *pRndPos++;
-		                  break;
-		                  }
-		               aMoves[iA] = *pRndPos++;
-		               }
-	
+                  register char iRndJmp = localrnd(iMaxMoves-1)+1;
+                  register char iMM = iMaxMoves;
+                  for(register char iA=0; iA<iMM; iA++)
+                     {
+                     if(iRndJmp == iA)
+                        {
+                        pRndPos = pJmpTo;
+                        if(!bMovesCompatable_v2(*pRndPos, aMoves[iA-1])) pRndPos++;
+                        for(; iA<iMM; iA++)
+                           aMoves[iA] = *pRndPos++;
+                        break;
+                        }
+                     aMoves[iA] = *pRndPos++;
+                     }
+   
 #endif
 
-#if 0 				// 
-						// Life without RndBuffer, too slow.
-						//
-		            if(cOptionR_rnd_value != -1)
-		               {
-		               if(cOptionR_add_value != -1)
-		                  iMaxMoves = localrnd(cOptionR_rnd_value)+cOptionR_add_value;
-		               else
-		                  iMaxMoves = localrnd(cOptionR_rnd_value);
-		               }
-		            else 
-		               iMaxMoves = localrnd((cFoundAllMax?cFoundAllMax:30)-6)+6;
-                 						
+#if 0             // 
+                  // Life without RndBuffer, too slow.
+                  //
+                  if(cOptionR_rnd_value != -1)
+                     {
+                     if(cOptionR_add_value != -1)
+                        iMaxMoves = localrnd(cOptionR_rnd_value)+cOptionR_add_value;
+                     else
+                        iMaxMoves = localrnd(cOptionR_rnd_value);
+                     }
+                  else 
+                     iMaxMoves = localrnd((cFoundAllMax?cFoundAllMax:30)-6)+6;
+                                 
                   int iPick;
                   char *pRndPos;
                   int iPos;
@@ -2906,540 +2906,540 @@ int main(int argc, char **argv)
                   iMoveCount = aPrimary[iPick]->second.iMoveCount;
                   pRndPos = aPrimary[iPick]->second.aMovesScramble;
                   iPos = localrnd(iMoveCount-2);
-						cFwd = localrnd(1)?1:-1;
-		            iRndJmp = localrnd(iMaxMoves-1)+1;
+                  cFwd = localrnd(1)?1:-1;
+                  iRndJmp = localrnd(iMaxMoves-1)+1;
                   
                   aMoves[0] = pRndPos[iPos];
                   iPos += cFwd;
                   iRndJmp--;
-		            for(char iA=1; iA<iMaxMoves; iA++, iRndJmp--)
-		               {
-		               if(iRndJmp == 0 || iPos < 0 || iPos >= iMoveCount)
-		                  {
-		                  iPick = localrnd(iaPrimary_Curr-1);
-		                  iMoveCount = aPrimary[iPick]->second.iMoveCount;
-		                  pRndPos = aPrimary[iPick]->second.aMovesScramble;
-		                  iPos = localrnd(iMoveCount-2);
-								cFwd = localrnd(1)?1:-1;
-				            iRndJmp = localrnd(iMaxMoves-1)+1;
-		                  if(!bMovesCompatable_v2(pRndPos[iPos], aMoves[iA-1])) iPos++;
-		                  }
-		               aMoves[iA] = pRndPos[iPos];
+                  for(char iA=1; iA<iMaxMoves; iA++, iRndJmp--)
+                     {
+                     if(iRndJmp == 0 || iPos < 0 || iPos >= iMoveCount)
+                        {
+                        iPick = localrnd(iaPrimary_Curr-1);
+                        iMoveCount = aPrimary[iPick]->second.iMoveCount;
+                        pRndPos = aPrimary[iPick]->second.aMovesScramble;
+                        iPos = localrnd(iMoveCount-2);
+                        cFwd = localrnd(1)?1:-1;
+                        iRndJmp = localrnd(iMaxMoves-1)+1;
+                        if(!bMovesCompatable_v2(pRndPos[iPos], aMoves[iA-1])) iPos++;
+                        }
+                     aMoves[iA] = pRndPos[iPos];
                      iPos += cFwd;
-		               }
-	
+                     }
+   
 #endif
 
 #if 0
-						// testing...
-		            iMaxMoves = 12; // at 5 moves, 1.3 seconds, at 12 moves its 2.5, so rotation is an issue.
-		            aMoves[0] = 0;
-		            aMoves[1] = 3;
-		            aMoves[2] = 0;
-		            aMoves[3] = 3;
-		            aMoves[4] = 0;
-		            aMoves[5] = 3;
-		            aMoves[6] = 0;
-		            aMoves[7] = 3;
-		            aMoves[8] = 0;
-		            aMoves[9] = 3;
-		            aMoves[10] = 0;
-		            aMoves[11] = 3;
+                  // testing...
+                  iMaxMoves = 12; // at 5 moves, 1.3 seconds, at 12 moves its 2.5, so rotation is an issue.
+                  aMoves[0] = 0;
+                  aMoves[1] = 3;
+                  aMoves[2] = 0;
+                  aMoves[3] = 3;
+                  aMoves[4] = 0;
+                  aMoves[5] = 3;
+                  aMoves[6] = 0;
+                  aMoves[7] = 3;
+                  aMoves[8] = 0;
+                  aMoves[9] = 3;
+                  aMoves[10] = 0;
+                  aMoves[11] = 3;
 #endif                  
 
 #if 0 
-						// 
+                  // 
                   // Turn this on to validate aMoves only has compatable adjacent turns
                   //
-		            for(int iA=0, iB=1; iA<iMaxMoves-1 && iB<iMaxMoves; ++iA, ++iB)
-		               {
-		               if(!bMovesCompatable_v2(aMoves[iA], aMoves[iB]))
-		                  {
-		                  printf("Owh No!!!\n"); fflush(stdout);
+                  for(int iA=0, iB=1; iA<iMaxMoves-1 && iB<iMaxMoves; ++iA, ++iB)
+                     {
+                     if(!bMovesCompatable_v2(aMoves[iA], aMoves[iB]))
+                        {
+                        printf("Owh No!!!\n"); fflush(stdout);
                         for(int iA=0; iA<iMaxMoves+2; ++iA)
-                        	printf("[%d]\n", aMoves[iA]);
+                           printf("[%d]\n", aMoves[iA]);
                         printf("iRndJmp=[%d]\n", iRndJmp);
                         fflush(stdout);
-		                  pause(99999);
-		                  }
-		               }
+                        pause(99999);
+                        }
+                     }
 #endif
-		            }
-		         else
-		            {
-		            if(bReadingIn)
-		               {
-		               char szBuff[65536];                             
-		               while(fgets(szBuff, sizeof(szBuff), fpOptionF))
-		                  {
-		                  rem1310(szBuff);
-		                  trim(szBuff); 
-		                  if(!szBuff[0]) continue;
-		                  if(strchr(szBuff, '.')) continue;
-		                  if(strncmp(szBuff, "Scramble: ", 10)!=0) continue;
-		                  strcat(szBuff, "    "); 
-		                  dqScrambles.push_back(&szBuff[10]);
-		                  }
-		               fclose(fpOptionF);
-		               fpOptionF = NULL;
-		               bReadingIn = false;
-		               }
-		            if(!bReadingIn)
-		               {
-		               if(dqScrambles.size())
-		                  {
-		                  memset(aMoves, 0, 60);
-		                  iMaxMoves = ASCIItoByte((char*)dqScrambles.back().c_str(), aMoves);
-		                  if(iMaxMoves > cFoundAllMax) cFoundAllMax = iMaxMoves;
-		                  dqScrambles.pop_back();
-		                  }
-		               else
-		                  {
-		                  if(mPrimary.size() != 16416) cFoundAllMax = 0;
-		                  iFoundCount = 0;
-		                  if(bOptionK)
-		                  	{
-		                     iMaxMoves = iStartMovesCount;
-		                     memcpy(aMoves, aMovesStart, 60);
-		                     bOptionF = false;
-		                     bFirst = true;
-		                     if(bReenableOptionS_at_K) bOptionS = true;
-		                     continue;
-		                     }
-		                  if(cOptionR == 0)
-		                     {
-		                     printf("Done!\n");
-		                     break;
-		                     }
-		                  cOptionR = 2;
-		                  continue;
-		                  }
-		               }
-		            }              
-		         bFirst = true;
-		         }
-		            
-		      if(!bFirst)
-		         {
-		         for(int iM=0;;)
-		            {
-		            aMoves[iM]++;
-		            if(aMoves[iM] >= iPossibleMoves)
-		               {
-		               if(aMoves[iM+1] >= 2)
-		                  {
-		                  for(int iM2=iM; iM2>=0; )
-		                     {
-		                     aMoves[iM2] = 0;
-		                     iM2--;
-		                     if(iM2 < 0) break;
-		                     aMoves[iM2] = 3;
-		                     iM2--;
-		                     }
-		                  }
-		               else
-		                  {
-		                  for(int iM2=iM; iM2>=0; )
-		                     {
-		                     aMoves[iM2] = 3;
-		                     iM2--;
-		                     if(iM2 < 0) break;
-		                     aMoves[iM2] = 0;
-		                     iM2--;
-		                     }  
-		                  }                  
-		               if(iM == iMaxMoves-1) { iMaxMoves++; break; }
-		               iM++;
-		               continue;
-		               }
-		            if(iM < iMaxMoves-1 && !bMovesCompatable_v2(aMoves[iM], aMoves[iM+1]))
-		               {
-		               continue;
-		               }
-		            break;
-		            }
-		         }
-		      else
-		         bFirst = false;
-		   
-		      if(bOptionS)
-		         {
-		         for(int iA=60-1; iA>=0; --iA)
-		            {
-		            if(aMoves[iA] != aMovesStop[iA])
-		               {
-		               if(aMoves[iA] > aMovesStop[iA])    // memcmp(aMoves, aMovesStop, 60) == 0) // cost: 13 million / sec
-		                  {
-		                  printf("Done!\n"); //need to test this
+                  }
+               else
+                  {
+                  if(bReadingIn)
+                     {
+                     char szBuff[65536];                             
+                     while(fgets(szBuff, sizeof(szBuff), fpOptionF))
+                        {
+                        rem1310(szBuff);
+                        trim(szBuff); 
+                        if(!szBuff[0]) continue;
+                        if(strchr(szBuff, '.')) continue;
+                        if(strncmp(szBuff, "Scramble: ", 10)!=0) continue;
+                        strcat(szBuff, "    "); 
+                        dqScrambles.push_back(&szBuff[10]);
+                        }
+                     fclose(fpOptionF);
+                     fpOptionF = NULL;
+                     bReadingIn = false;
+                     }
+                  if(!bReadingIn)
+                     {
+                     if(dqScrambles.size())
+                        {
+                        memset(aMoves, 0, 60);
+                        iMaxMoves = ASCIItoByte((char*)dqScrambles.back().c_str(), aMoves);
+                        if(iMaxMoves > cFoundAllMax) cFoundAllMax = iMaxMoves;
+                        dqScrambles.pop_back();
+                        }
+                     else
+                        {
+                        if(mPrimary.size() != 16416) cFoundAllMax = 0;
+                        iFoundCount = 0;
+                        if(bOptionK)
+                           {
+                           iMaxMoves = iStartMovesCount;
+                           memcpy(aMoves, aMovesStart, 60);
+                           bOptionF = false;
+                           bFirst = true;
+                           if(bReenableOptionS_at_K) bOptionS = true;
+                           continue;
+                           }
+                        if(cOptionR == 0)
+                           {
+                           printf("Done!\n");
+                           break;
+                           }
+                        cOptionR = 2;
+                        continue;
+                        }
+                     }
+                  }              
+               bFirst = true;
+               }
+                  
+            if(!bFirst)
+               {
+               for(int iM=0;;)
+                  {
+                  aMoves[iM]++;
+                  if(aMoves[iM] >= iPossibleMoves)
+                     {
+                     if(aMoves[iM+1] >= 2)
+                        {
+                        for(int iM2=iM; iM2>=0; )
+                           {
+                           aMoves[iM2] = 0;
+                           iM2--;
+                           if(iM2 < 0) break;
+                           aMoves[iM2] = 3;
+                           iM2--;
+                           }
+                        }
+                     else
+                        {
+                        for(int iM2=iM; iM2>=0; )
+                           {
+                           aMoves[iM2] = 3;
+                           iM2--;
+                           if(iM2 < 0) break;
+                           aMoves[iM2] = 0;
+                           iM2--;
+                           }  
+                        }                  
+                     if(iM == iMaxMoves-1) { iMaxMoves++; break; }
+                     iM++;
+                     continue;
+                     }
+                  if(iM < iMaxMoves-1 && !bMovesCompatable_v2(aMoves[iM], aMoves[iM+1]))
+                     {
+                     continue;
+                     }
+                  break;
+                  }
+               }
+            else
+               bFirst = false;
+         
+            if(bOptionS)
+               {
+               for(int iA=60-1; iA>=0; --iA)
+                  {
+                  if(aMoves[iA] != aMovesStop[iA])
+                     {
+                     if(aMoves[iA] > aMovesStop[iA])    // memcmp(aMoves, aMovesStop, 60) == 0) // cost: 13 million / sec
+                        {
+                        printf("Done!\n"); //need to test this
                         bExit = true;
-		                  exit(0);
-		                  }
-		               break;
-		               }
-		            }
-		         }
-		      
-		      memcpy(aState1, aState, 6*3*3);
-		      pCurrState = aState1;            
+                        exit(0);
+                        }
+                     break;
+                     }
+                  }
+               }
+            
+            memcpy(aState1, aState, 6*3*3);
+            pCurrState = aState1;            
 
-		      char iMM = iMaxMoves;
-		      for(char iA=0;;) // eh, some speed boost coding it like this...
-		         {
-		         rotate(aState1, aMoves[iA++], aState2);
-		         if(iA == iMM) { pCurrState = aState2; break; }
-		         rotate(aState2, aMoves[iA++], aState1);
-		         if(iA == iMM) { pCurrState = aState1; break; }
-		         }
+            char iMM = iMaxMoves;
+            for(char iA=0;;) // eh, some speed boost coding it like this...
+               {
+               rotate(aState1, aMoves[iA++], aState2);
+               if(iA == iMM) { pCurrState = aState2; break; }
+               rotate(aState2, aMoves[iA++], aState1);
+               if(iA == iMM) { pCurrState = aState1; break; }
+               }
 
-				//
-		      // V3
-		      // Pretty good performance writing it like this...
             //
-		      register char *p = pCurrState + 3;
-		      if(*p++ == 'g' && *p++ == 'g' && *p++ == 'g' &&
-		         *p++ == 'g' && *p++ == 'g' && *p++ == 'g')
-		         {
-		         p+=3;
-		         if(*p++ == 'b' && *p++ == 'b' && *p++ == 'b' &&
-		            *p++ == 'b' && *p++ == 'b' && *p++ == 'b')
-		            {           
-		            p+=3;
-		            if(*p++ == 'r' && *p++ == 'r' && *p++ == 'r' &&
-		               *p++ == 'r' && *p++ == 'r' && *p++ == 'r')
-		               {
-		               p+=3;
-		               if(*p++ == 'o' && *p++ == 'o' && *p++ == 'o' &&
-		                  *p++ == 'o' && *p++ == 'o' && *p++ == 'o')
-		                  {
-		                  if(p[0] != 'y' || p[1] != 'y' || p[2] != 'y' ||
-		                     p[3] != 'y' || p[4] != 'y' || p[5] != 'y' ||
-		                     p[6] != 'y' || p[7] != 'y' || p[8] != 'y')
-		                     {
-		                     p+=9;
-		                     if(*p++ == 'w' && *p++ == 'w' && *p++ == 'w' &&
-		                        *p++ == 'w' && *p++ == 'w' && *p++ == 'w' &&
-		                        *p++ == 'w' && *p++ == 'w' && *p   == 'w')
-		                        {
-		                        p=NULL;
-		                        }
-		                     }
-		                  }
-		               }
-		            }
-		         }
-		         
-		      ////////////////////////////
-		      // V2
-		      // hmmm actually a huge improvement here...
-		      // if(strncmp(&pCurrState[4*3*3], "yyyyyyyyy", 9)!=0 &&
-		      //    strncmp(&pCurrState[5*3*3], "wwwwwwwww", 9)==0 &&
-		      //    strncmp(&pCurrState[0*3*3 + 3], "gggggg", 6)==0 &&
-		      //    strncmp(&pCurrState[1*3*3 + 3], "bbbbbb", 6)==0 &&
-		      //    strncmp(&pCurrState[2*3*3 + 3], "rrrrrr", 6)==0 &&
-		      //    strncmp(&pCurrState[3*3*3 + 3], "oooooo", 6)==0)
-		      
-		      ////////////////////////////
-		      // V1
-		      // if(isf2l(pCurrState) &&          
-		      // !isyellowdone(pCurrState))
+            // V3
+            // Pretty good performance writing it like this...
+            //
+            register char *p = pCurrState + 3;
+            if(*p++ == 'g' && *p++ == 'g' && *p++ == 'g' &&
+               *p++ == 'g' && *p++ == 'g' && *p++ == 'g')
+               {
+               p+=3;
+               if(*p++ == 'b' && *p++ == 'b' && *p++ == 'b' &&
+                  *p++ == 'b' && *p++ == 'b' && *p++ == 'b')
+                  {           
+                  p+=3;
+                  if(*p++ == 'r' && *p++ == 'r' && *p++ == 'r' &&
+                     *p++ == 'r' && *p++ == 'r' && *p++ == 'r')
+                     {
+                     p+=3;
+                     if(*p++ == 'o' && *p++ == 'o' && *p++ == 'o' &&
+                        *p++ == 'o' && *p++ == 'o' && *p++ == 'o')
+                        {
+                        if(p[0] != 'y' || p[1] != 'y' || p[2] != 'y' ||
+                           p[3] != 'y' || p[4] != 'y' || p[5] != 'y' ||
+                           p[6] != 'y' || p[7] != 'y' || p[8] != 'y')
+                           {
+                           p+=9;
+                           if(*p++ == 'w' && *p++ == 'w' && *p++ == 'w' &&
+                              *p++ == 'w' && *p++ == 'w' && *p++ == 'w' &&
+                              *p++ == 'w' && *p++ == 'w' && *p   == 'w')
+                              {
+                              p=NULL;
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+               
+            ////////////////////////////
+            // V2
+            // hmmm actually a huge improvement here...
+            // if(strncmp(&pCurrState[4*3*3], "yyyyyyyyy", 9)!=0 &&
+            //    strncmp(&pCurrState[5*3*3], "wwwwwwwww", 9)==0 &&
+            //    strncmp(&pCurrState[0*3*3 + 3], "gggggg", 6)==0 &&
+            //    strncmp(&pCurrState[1*3*3 + 3], "bbbbbb", 6)==0 &&
+            //    strncmp(&pCurrState[2*3*3 + 3], "rrrrrr", 6)==0 &&
+            //    strncmp(&pCurrState[3*3*3 + 3], "oooooo", 6)==0)
+            
+            ////////////////////////////
+            // V1
+            // if(isf2l(pCurrState) &&          
+            // !isyellowdone(pCurrState))
 
-				//
-		      // Omit processing what we already processed. (saves about a second)
-		      //
-		      if(!p)
-			      {
-		         Node_T nt;
-		         memcpy(nt.aMoves, aMoves, iMaxMoves);
-		         nt.iMaxMoves = iMaxMoves;
-		         if(hmOmit.find(nt) != hmOmit.end())
-		         	p=pCurrState;
-		         else         
-		           	hmOmit.insert(std::pair<Node_T, char>{nt, 1});
-		      	}
+            //
+            // Omit processing what we already processed. (saves about a second)
+            //
+            if(!p)
+               {
+               Node_T nt;
+               memcpy(nt.aMoves, aMoves, iMaxMoves);
+               nt.iMaxMoves = iMaxMoves;
+               if(hmOmit.find(nt) != hmOmit.end())
+                  p=pCurrState;
+               else         
+                  hmOmit.insert(std::pair<Node_T, char>{nt, 1});
+               }
 
-				if(!p)
-		         {        
-		         int iLimit = 0;         
-		         while(1)
-		            {
-		            char szYellows[9*5+1] = {0x0};
-		            char *pPtr = szYellows;
-		            *pPtr++ = ' '; *pPtr++ = ' ';
-		            for(int x1 = 2; x1 >= 0; --x1) {
-		               *pPtr++ = pCurrState[1*3*3 + 0*3+x1] == 'y'?'y':' ';
-		               *pPtr++ = ' '; }
-		            *pPtr++ = ' ';
-		            for(int y1 = 0; y1 < 3; ++y1)
-		               {
-		               *pPtr++ = pCurrState[2*3*3 + 0*3+y1] == 'y'?'y':' ';
-		               *pPtr++ = ' ';
-		               for(int x1 = 0; x1 < 3; ++x1) {
-		                  *pPtr++ = pCurrState[4*3*3 + y1*3+x1] == 'y'?'y':' ';
-		                  *pPtr++ = ' '; }
-		               *pPtr++ = pCurrState[3*3*3 + 0*3+(2-y1)] == 'y'?'y':' ';
-		               }
-		            *pPtr++ = ' '; *pPtr++ = ' ';
-		            for(int x1 = 0; x1 < 3; ++x1) {
-		               *pPtr++ = pCurrState[0*3*3 + 0*3+x1] == 'y'?'y':' ';
-		               *pPtr++ = ' '; }
-		            *pPtr++ = ' ';
-		            *pPtr = 0;
-		                                          
-		            auto iter = mOLL.find(szYellows);
-		            if(iter != mOLL.end())
-		               {               
-		               char sz1LLL[9*5+1] = {0x0};
-		               char *pPtr = sz1LLL;
-		               *pPtr++ = ' '; *pPtr++ = ' ';
-		               for(int x1 = 2; x1 >= 0; --x1) {
-		                  *pPtr++ = pCurrState[1*3*3 + 0*3+x1];
-		                  *pPtr++ = ' '; }
-		               *pPtr++ = ' ';
-		               for(int y1 = 0; y1 < 3; ++y1)
-		                  {
-		                  *pPtr++ = pCurrState[2*3*3 + 0*3+y1];
-		                  *pPtr++ = ' ';
-		                  for(int x1 = 0; x1 < 3; ++x1) {
-		                     *pPtr++ = pCurrState[4*3*3 + y1*3+x1];
-		                     *pPtr++ = ' '; }
-		                  *pPtr++ = pCurrState[3*3*3 + 0*3+(2-y1)];
-		                  }
-		               *pPtr++ = ' '; *pPtr++ = ' ';
-		               for(int x1 = 0; x1 < 3; ++x1) {
-		                  *pPtr++ = pCurrState[0*3*3 + 0*3+x1];
-		                  *pPtr++ = ' '; }
-		               *pPtr++ = ' ';
-		               *pPtr = 0;
-		                     
-		               auto iter_p = mPrimary.find(sz1LLL);
-		               if(iter_p == mPrimary.end())
-		                  {
-			               int iMoveCount = iMaxMoves;
-			               int iMoveCount_WithF2is2Moves = iMaxMoves;
-			               for(char *pI=aMoves; iMoveCount>0; --iMoveCount, ++pI)
-			               	if(*pI==2 || *pI==5 || *pI==8 || *pI==11 || *pI==14 || *pI==17)
-			                  	iMoveCount_WithF2is2Moves++;
-			               iMoveCount = iMaxMoves;
-			               char aMovesScramble[60];
-			               memcpy(aMovesScramble, aMoves, 60);
-			               char szScramble[60*4];
-			               szScramble[0] = 0;
-			               for(int iA=0; iA<iMaxMoves; ++iA)
-			                  sprintf(&szScramble[iA*(2+1)], "%2.2s ", mPossibleMoves.find(aMoves[iA])->second);
-		                  Primary_T st;
-		                  st.iOLL = iter->second;
-		                  memcpy(st.aMovesScramble, aMovesScramble, 60);
-		                  strcpy(st.szScramble, szScramble);
-		                  st.szSolution[0] = 0;
-		                  char aMovesTmp[60];
-		                  memcpy(aMovesTmp, aMoves, iMaxMoves);
-		                  ReverseTheAlg(aMovesTmp, iMaxMoves);
-		                  for(int iA=0; iA<iMaxMoves; ++iA)
-		                     sprintf(&st.szSolution[iA*(2+1)], "%2.2s ", mPossibleMoves.find(aMovesTmp[iA])->second);
-		                  st.iMoveCount = iMoveCount;
-		                  st.iMoveCount_WithF2is2Moves = iMoveCount_WithF2is2Moves;
+            if(!p)
+               {        
+               int iLimit = 0;         
+               while(1)
+                  {
+                  char szYellows[9*5+1] = {0x0};
+                  char *pPtr = szYellows;
+                  *pPtr++ = ' '; *pPtr++ = ' ';
+                  for(int x1 = 2; x1 >= 0; --x1) {
+                     *pPtr++ = pCurrState[1*3*3 + 0*3+x1] == 'y'?'y':' ';
+                     *pPtr++ = ' '; }
+                  *pPtr++ = ' ';
+                  for(int y1 = 0; y1 < 3; ++y1)
+                     {
+                     *pPtr++ = pCurrState[2*3*3 + 0*3+y1] == 'y'?'y':' ';
+                     *pPtr++ = ' ';
+                     for(int x1 = 0; x1 < 3; ++x1) {
+                        *pPtr++ = pCurrState[4*3*3 + y1*3+x1] == 'y'?'y':' ';
+                        *pPtr++ = ' '; }
+                     *pPtr++ = pCurrState[3*3*3 + 0*3+(2-y1)] == 'y'?'y':' ';
+                     }
+                  *pPtr++ = ' '; *pPtr++ = ' ';
+                  for(int x1 = 0; x1 < 3; ++x1) {
+                     *pPtr++ = pCurrState[0*3*3 + 0*3+x1] == 'y'?'y':' ';
+                     *pPtr++ = ' '; }
+                  *pPtr++ = ' ';
+                  *pPtr = 0;
+                                                
+                  auto iter = mOLL.find(szYellows);
+                  if(iter != mOLL.end())
+                     {               
+                     char sz1LLL[9*5+1] = {0x0};
+                     char *pPtr = sz1LLL;
+                     *pPtr++ = ' '; *pPtr++ = ' ';
+                     for(int x1 = 2; x1 >= 0; --x1) {
+                        *pPtr++ = pCurrState[1*3*3 + 0*3+x1];
+                        *pPtr++ = ' '; }
+                     *pPtr++ = ' ';
+                     for(int y1 = 0; y1 < 3; ++y1)
+                        {
+                        *pPtr++ = pCurrState[2*3*3 + 0*3+y1];
+                        *pPtr++ = ' ';
+                        for(int x1 = 0; x1 < 3; ++x1) {
+                           *pPtr++ = pCurrState[4*3*3 + y1*3+x1];
+                           *pPtr++ = ' '; }
+                        *pPtr++ = pCurrState[3*3*3 + 0*3+(2-y1)];
+                        }
+                     *pPtr++ = ' '; *pPtr++ = ' ';
+                     for(int x1 = 0; x1 < 3; ++x1) {
+                        *pPtr++ = pCurrState[0*3*3 + 0*3+x1];
+                        *pPtr++ = ' '; }
+                     *pPtr++ = ' ';
+                     *pPtr = 0;
+                           
+                     auto iter_p = mPrimary.find(sz1LLL);
+                     if(iter_p == mPrimary.end())
+                        {
+                        int iMoveCount = iMaxMoves;
+                        int iMoveCount_WithF2is2Moves = iMaxMoves;
+                        for(char *pI=aMoves; iMoveCount>0; --iMoveCount, ++pI)
+                           if(*pI==2 || *pI==5 || *pI==8 || *pI==11 || *pI==14 || *pI==17)
+                              iMoveCount_WithF2is2Moves++;
+                        iMoveCount = iMaxMoves;
+                        char aMovesScramble[60];
+                        memcpy(aMovesScramble, aMoves, 60);
+                        char szScramble[60*4];
+                        szScramble[0] = 0;
+                        for(int iA=0; iA<iMaxMoves; ++iA)
+                           sprintf(&szScramble[iA*(2+1)], "%2.2s ", mPossibleMoves.find(aMoves[iA])->second);
+                        Primary_T st;
+                        st.iOLL = iter->second;
+                        memcpy(st.aMovesScramble, aMovesScramble, 60);
+                        strcpy(st.szScramble, szScramble);
+                        st.szSolution[0] = 0;
+                        char aMovesTmp[60];
+                        memcpy(aMovesTmp, aMoves, iMaxMoves);
+                        ReverseTheAlg(aMovesTmp, iMaxMoves);
+                        for(int iA=0; iA<iMaxMoves; ++iA)
+                           sprintf(&st.szSolution[iA*(2+1)], "%2.2s ", mPossibleMoves.find(aMovesTmp[iA])->second);
+                        st.iMoveCount = iMoveCount;
+                        st.iMoveCount_WithF2is2Moves = iMoveCount_WithF2is2Moves;
                         st.iaPrimaryIndex = iaPrimary_Curr;
                         aPrimary[iaPrimary_Curr++] = mPrimary.insert(std::pair<std::string, Primary_T>{sz1LLL, st}).first;
-		                  std::map<int, int>::iterator iter_o = mCountPerOLL.find(st.iOLL);
-		                  if(iter_o == mCountPerOLL.end())
-		                     {
-		                     mCountPerOLL.insert(std::pair<int, int>{st.iOLL, 0});
-		                     iter_o = mCountPerOLL.find(st.iOLL);
-		                     }
-		                  iter_o->second++;                        
-		                  //
-		                  // Print some info, into the text files 1/appname_OLL_01.txt etc...
-                        //	
-		                  char szTimeBuff[50];
+                        std::map<int, int>::iterator iter_o = mCountPerOLL.find(st.iOLL);
+                        if(iter_o == mCountPerOLL.end())
+                           {
+                           mCountPerOLL.insert(std::pair<int, int>{st.iOLL, 0});
+                           iter_o = mCountPerOLL.find(st.iOLL);
+                           }
+                        iter_o->second++;                        
+                        //
+                        // Print some info, into the text files 1/appname_OLL_01.txt etc...
+                        // 
+                        char szTimeBuff[50];
 #if 0 
-								// Doing multithreading now so lets *not* print out to the screen
-								printf("\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL!\n", 
-		                     FmtYYYYMMDD_HH24MISS(szTimeBuff),
-		                     iBench, iBench2, st.iOLL+1, iter_o->second, 
-		                     iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size());
-		                  printf("%d Rotations to get desired OLL orientation\n", iLimit);
-		                  printf("Scramble: %s\n", szScramble);
-		                  printf("Solution: %s\n", st.szSolution);
-		                  printchart(sz1LLL);
+                        // Doing multithreading now so lets *not* print out to the screen
+                        printf("\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL!\n", 
+                           FmtYYYYMMDD_HH24MISS(szTimeBuff),
+                           iBench, iBench2, st.iOLL+1, iter_o->second, 
+                           iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size());
+                        printf("%d Rotations to get desired OLL orientation\n", iLimit);
+                        printf("Scramble: %s\n", szScramble);
+                        printf("Solution: %s\n", st.szSolution);
+                        printchart(sz1LLL);
 #endif
-		                  fprintf(fdOLL[st.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL!\n", 
-		                     FmtYYYYMMDD_HH24MISS(szTimeBuff), 
-		                     iBench, iBench2, st.iOLL, iter_o->second, 
-		                     iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size());
-		                  fprintf(fdOLL[st.iOLL], "%d Rotations to get desired OLL orientation\n", iLimit);
-		                  fprintf(fdOLL[st.iOLL], "Scramble: %s\n", szScramble);
-		                  fprintf(fdOLL[st.iOLL], "Solution: %s\n", st.szSolution);
-		                  printchart(sz1LLL, fdOLL[st.iOLL]);
-		                  fflush(fdOLL[st.iOLL]);
-		                  iFoundCount++;
-		                  }
-		               else
-		                  {
-			               int iMoveCount = iMaxMoves;
-			               int iMoveCount_WithF2is2Moves = iMaxMoves;
-			               for(char *pI=aMoves; iMoveCount>0; --iMoveCount, ++pI)
-			               	if(*pI==2 || *pI==5 || *pI==8 || *pI==11 || *pI==14 || *pI==17)
-			                  	iMoveCount_WithF2is2Moves++;
-			               iMoveCount = iMaxMoves;
-		                  if((iter_p->second.iMoveCount > iMoveCount)
-		                      ||
-		                     (iMoveCount == iter_p->second.iMoveCount && 
-		                      iMoveCount_WithF2is2Moves < iter_p->second.iMoveCount_WithF2is2Moves))
-		                     {
-		                     int iCountWas = iter_p->second.iMoveCount;
-				               char aMovesScramble[60];
-				               memcpy(aMovesScramble, aMoves, 60);                    
-				               char szScramble[60*4];
-				               szScramble[0] = 0;
-				               for(int iA=0; iA<iMaxMoves; ++iA)
-				                  sprintf(&szScramble[iA*(2+1)], "%2.2s ", mPossibleMoves.find(aMoves[iA])->second);
-		                     Primary_T st;
-		                     st.iOLL = iter->second;
-		                     memcpy(st.aMovesScramble, aMovesScramble, 60);
-		                     strcpy(st.szScramble, szScramble);                     
-		                     st.szSolution[0] = 0;
-			                  char aMovesTmp[60];
-			                  memcpy(aMovesTmp, aMoves, iMaxMoves);
-			                  ReverseTheAlg(aMovesTmp, iMaxMoves);
-			                  for(int iA=0; iA<iMaxMoves; ++iA)
-			                     sprintf(&st.szSolution[iA*(2+1)], "%2.2s ", mPossibleMoves.find(aMovesTmp[iA])->second);
-		                     st.iMoveCount = iMoveCount;
-		                     st.iMoveCount_WithF2is2Moves = iMoveCount_WithF2is2Moves;
+                        fprintf(fdOLL[st.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL!\n", 
+                           FmtYYYYMMDD_HH24MISS(szTimeBuff), 
+                           iBench, iBench2, st.iOLL, iter_o->second, 
+                           iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size());
+                        fprintf(fdOLL[st.iOLL], "%d Rotations to get desired OLL orientation\n", iLimit);
+                        fprintf(fdOLL[st.iOLL], "Scramble: %s\n", szScramble);
+                        fprintf(fdOLL[st.iOLL], "Solution: %s\n", st.szSolution);
+                        printchart(sz1LLL, fdOLL[st.iOLL]);
+                        fflush(fdOLL[st.iOLL]);
+                        iFoundCount++;
+                        }
+                     else
+                        {
+                        int iMoveCount = iMaxMoves;
+                        int iMoveCount_WithF2is2Moves = iMaxMoves;
+                        for(char *pI=aMoves; iMoveCount>0; --iMoveCount, ++pI)
+                           if(*pI==2 || *pI==5 || *pI==8 || *pI==11 || *pI==14 || *pI==17)
+                              iMoveCount_WithF2is2Moves++;
+                        iMoveCount = iMaxMoves;
+                        if((iter_p->second.iMoveCount > iMoveCount)
+                            ||
+                           (iMoveCount == iter_p->second.iMoveCount && 
+                            iMoveCount_WithF2is2Moves < iter_p->second.iMoveCount_WithF2is2Moves))
+                           {
+                           int iCountWas = iter_p->second.iMoveCount;
+                           char aMovesScramble[60];
+                           memcpy(aMovesScramble, aMoves, 60);                    
+                           char szScramble[60*4];
+                           szScramble[0] = 0;
+                           for(int iA=0; iA<iMaxMoves; ++iA)
+                              sprintf(&szScramble[iA*(2+1)], "%2.2s ", mPossibleMoves.find(aMoves[iA])->second);
+                           Primary_T st;
+                           st.iOLL = iter->second;
+                           memcpy(st.aMovesScramble, aMovesScramble, 60);
+                           strcpy(st.szScramble, szScramble);                     
+                           st.szSolution[0] = 0;
+                           char aMovesTmp[60];
+                           memcpy(aMovesTmp, aMoves, iMaxMoves);
+                           ReverseTheAlg(aMovesTmp, iMaxMoves);
+                           for(int iA=0; iA<iMaxMoves; ++iA)
+                              sprintf(&st.szSolution[iA*(2+1)], "%2.2s ", mPossibleMoves.find(aMovesTmp[iA])->second);
+                           st.iMoveCount = iMoveCount;
+                           st.iMoveCount_WithF2is2Moves = iMoveCount_WithF2is2Moves;
                            st.iaPrimaryIndex = iter_p->second.iaPrimaryIndex;                                               
-		                     mPrimary.erase(iter_p);
+                           mPrimary.erase(iter_p);
                            aPrimary[st.iaPrimaryIndex] = mPrimary.insert(std::pair<std::string, Primary_T>{sz1LLL, st}).first;
-		                     auto iter_o = mCountPerOLL.find(st.iOLL);
-		                     char szTimeBuff[50];
+                           auto iter_o = mCountPerOLL.find(st.iOLL);
+                           char szTimeBuff[50];
 #if 0
-		                     printf("\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL! (found shorter alg <%d)\n",
-		                        FmtYYYYMMDD_HH24MISS(szTimeBuff), 
-		                        iBench, iBench2, st.iOLL+1, iter_o->second, 
-		                        iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size(),
-		                        iCountWas);
-		                     printf("%d Rotations to get desired OLL orientation\n", iLimit);
-		                     printf("Scramble: %s\n", szScramble);
-		                     printf("Solution: %s\n", st.szSolution);
-		                     printchart(sz1LLL);
-#endif	                     
-		                     fprintf(fdOLL[st.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL! (found shorter alg <%d)\n", 
-		                        FmtYYYYMMDD_HH24MISS(szTimeBuff), 
-		                        iBench, iBench2, st.iOLL+1, iter_o->second, 
-		                        iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size(),
-		                        iCountWas);
-		                     fprintf(fdOLL[st.iOLL], "%d Rotations to get desired OLL orientation\n", iLimit);
-		                     fprintf(fdOLL[st.iOLL], "Scramble: %s\n", szScramble);
-		                     fprintf(fdOLL[st.iOLL], "Solution: %s\n", st.szSolution);
-		                     printchart(sz1LLL, fdOLL[st.iOLL]);
-		                     fflush(fdOLL[st.iOLL]);
-		                     iFoundCount++;
-		                     }
-		                  }
-		               fflush(stdout);
-		               break;
-		               }
-		            //		            
-		            // OLL Not Found in the desired orientation, UTheAlg!
+                           printf("\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL! (found shorter alg <%d)\n",
+                              FmtYYYYMMDD_HH24MISS(szTimeBuff), 
+                              iBench, iBench2, st.iOLL+1, iter_o->second, 
+                              iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size(),
+                              iCountWas);
+                           printf("%d Rotations to get desired OLL orientation\n", iLimit);
+                           printf("Scramble: %s\n", szScramble);
+                           printf("Solution: %s\n", st.szSolution);
+                           printchart(sz1LLL);
+#endif                        
+                           fprintf(fdOLL[st.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL! (found shorter alg <%d)\n", 
+                              FmtYYYYMMDD_HH24MISS(szTimeBuff), 
+                              iBench, iBench2, st.iOLL+1, iter_o->second, 
+                              iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size(),
+                              iCountWas);
+                           fprintf(fdOLL[st.iOLL], "%d Rotations to get desired OLL orientation\n", iLimit);
+                           fprintf(fdOLL[st.iOLL], "Scramble: %s\n", szScramble);
+                           fprintf(fdOLL[st.iOLL], "Solution: %s\n", st.szSolution);
+                           printchart(sz1LLL, fdOLL[st.iOLL]);
+                           fflush(fdOLL[st.iOLL]);
+                           iFoundCount++;
+                           }
+                        }
+                     fflush(stdout);
+                     break;
+                     }
+                  //                
+                  // OLL Not Found in the desired orientation, UTheAlg!
                   //
-		            iLimit++;
-		            if(iLimit == 4)
-		               {
-		               printf("Owh no! ");
-		               for(int iA=0; iA<iMaxMoves; ++iA)
-		                  printf("%2.2s ", mPossibleMoves.find(aMoves[iA])->second);
-		               printf("\n");
+                  iLimit++;
+                  if(iLimit == 4)
+                     {
+                     printf("Owh no! ");
+                     for(int iA=0; iA<iMaxMoves; ++iA)
+                        printf("%2.2s ", mPossibleMoves.find(aMoves[iA])->second);
+                     printf("\n");
                      bExit = true;
-		               exit(0);
-		               }
-		            pCurrState = rotate(pCurrState, 12, pCurrState==aState1?aState2:aState1);
-		            char *pPtr2;
-		            for(int y1=0; y1<3; ++y1) // change the colors to
-		               for(int x1=0; x1<3; ++x1)
-		                  {
-		                  pPtr2 = pCurrState + 4*3*3 + y1*3+x1;
-		                  switch(*pPtr2)
-		                     {
-		                     case 'g': *pPtr2 = 'r'; break;
-		                     case 'r': *pPtr2 = 'b'; break;
-		                     case 'b': *pPtr2 = 'o'; break;
-		                     case 'o': *pPtr2 = 'g'; break;
-		                     };
-		                  }
-		            for(int face=0; face<=3; ++face)
-		               for(int x1=0; x1<3; ++x1)
-		                  {
-		                  pPtr2 = pCurrState + face*3*3 + 0*3+x1;
-		                  switch(*pPtr2)
-		                     {
-		                     case 'g': *pPtr2 = 'r'; break;
-		                     case 'r': *pPtr2 = 'b'; break;
-		                     case 'b': *pPtr2 = 'o'; break;
-		                     case 'o': *pPtr2 = 'g'; break;
-		                     };
-		                  }
-		            UTheAlg(aMoves, iMaxMoves);
-		            }
-		         //
+                     exit(0);
+                     }
+                  pCurrState = rotate(pCurrState, 12, pCurrState==aState1?aState2:aState1);
+                  char *pPtr2;
+                  for(int y1=0; y1<3; ++y1) // change the colors to
+                     for(int x1=0; x1<3; ++x1)
+                        {
+                        pPtr2 = pCurrState + 4*3*3 + y1*3+x1;
+                        switch(*pPtr2)
+                           {
+                           case 'g': *pPtr2 = 'r'; break;
+                           case 'r': *pPtr2 = 'b'; break;
+                           case 'b': *pPtr2 = 'o'; break;
+                           case 'o': *pPtr2 = 'g'; break;
+                           };
+                        }
+                  for(int face=0; face<=3; ++face)
+                     for(int x1=0; x1<3; ++x1)
+                        {
+                        pPtr2 = pCurrState + face*3*3 + 0*3+x1;
+                        switch(*pPtr2)
+                           {
+                           case 'g': *pPtr2 = 'r'; break;
+                           case 'r': *pPtr2 = 'b'; break;
+                           case 'b': *pPtr2 = 'o'; break;
+                           case 'o': *pPtr2 = 'g'; break;
+                           };
+                        }
+                  UTheAlg(aMoves, iMaxMoves);
+                  }
+               //
                // Get back to original state of aMoves, 
                // ah, but only if we are in combo increment mode.
                //
-		         if(cOptionR != 2)
-		         	{
-		         	if(iLimit == 1)      { UPrimeTheAlg(aMoves, iMaxMoves); }
-		         	else if(iLimit == 2) { UTheAlg(aMoves, iMaxMoves); UTheAlg(aMoves, iMaxMoves); }
-		         	else if(iLimit == 3) { UTheAlg(aMoves, iMaxMoves); }
-		            }
-		         }
-		      };
-		   printf("Main part is done.\n");
-		   if(bOptionF)
-		      {      
-		      printf("Okay, outputting final results... recreating all text files....\n");
-		      char szFile[2048];
-		      for(int iA=0; iA<57; ++iA)
-		         fclose(fdOLL[iA]);
-		      for(int iA=0; iA<57; ++iA)
-		         {
-		         snprintf(szFile, sizeof(szFile), "%d", iThreadNum);
-		         mkdir(szFile);
-			      snprintf(szFile, sizeof(szFile), "%d\\%s_oll_%02d.txt", iThreadNum, szArgv0, iA+1);
-		         fdOLL[iA] = fopen(szFile, "wb");
-		         }
-		      //
-		      // We want to sort each file from fewest moves to most moves...
-		      //
-		      std::multimap<long, std::string> mPriSort;
-		      for(auto iter : mPrimary)
-		         mPriSort.insert(std::pair<long, std::string>{
-		            iter.second.iOLL       * 1000000 +
-		            iter.second.iMoveCount *    1000 +
-		            iter.second.iMoveCount_WithF2is2Moves,
-		            iter.first
-		            });
-		      for(auto iter2 : mPriSort)
-		         {    
-		         auto iter = mPrimary.find(iter2.second.c_str());
-		         auto iter_o = mCountPerOLL.find(iter->second.iOLL);
-		         char szTimeBuff[50];
-		         fprintf(fdOLL[iter->second.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL!\n", 
-		            FmtYYYYMMDD_HH24MISS(szTimeBuff), 
-		            iBench, iBench2, iter->second.iOLL+1, iter_o->second, 
-		            iter->second.iMoveCount_WithF2is2Moves, iter->second.iMoveCount, mPrimary.size());
-		         fprintf(fdOLL[iter->second.iOLL], "Scramble: %s\n", iter->second.szScramble);
-		         fprintf(fdOLL[iter->second.iOLL], "Solution: %s\n", iter->second.szSolution);
-		         printchart((char*)iter->first.c_str(), fdOLL[iter->second.iOLL]);
-		         fflush(fdOLL[iter->second.iOLL]);
-		         }
-		      for(int iA=0; iA<57; ++iA)
-		         fclose(fdOLL[iA]);      
-		      }
-			bExit = true;
-			return 0; 
-			}, 8000000))
-			{
-			DBGS("Could not start thread, errno=%ld, strerror(errno)=[%s]", errno, strerror(errno));
+               if(cOptionR != 2)
+                  {
+                  if(iLimit == 1)      { UPrimeTheAlg(aMoves, iMaxMoves); }
+                  else if(iLimit == 2) { UTheAlg(aMoves, iMaxMoves); UTheAlg(aMoves, iMaxMoves); }
+                  else if(iLimit == 3) { UTheAlg(aMoves, iMaxMoves); }
+                  }
+               }
+            };
+         printf("Main part is done.\n");
+         if(bOptionF)
+            {      
+            printf("Okay, outputting final results... recreating all text files....\n");
+            char szFile[2048];
+            for(int iA=0; iA<57; ++iA)
+               fclose(fdOLL[iA]);
+            for(int iA=0; iA<57; ++iA)
+               {
+               snprintf(szFile, sizeof(szFile), "%d", iThreadNum);
+               mkdir(szFile);
+               snprintf(szFile, sizeof(szFile), "%d\\%s_oll_%02d.txt", iThreadNum, szArgv0, iA+1);
+               fdOLL[iA] = fopen(szFile, "wb");
+               }
+            //
+            // We want to sort each file from fewest moves to most moves...
+            //
+            std::multimap<long, std::string> mPriSort;
+            for(auto iter : mPrimary)
+               mPriSort.insert(std::pair<long, std::string>{
+                  iter.second.iOLL       * 1000000 +
+                  iter.second.iMoveCount *    1000 +
+                  iter.second.iMoveCount_WithF2is2Moves,
+                  iter.first
+                  });
+            for(auto iter2 : mPriSort)
+               {    
+               auto iter = mPrimary.find(iter2.second.c_str());
+               auto iter_o = mCountPerOLL.find(iter->second.iOLL);
+               char szTimeBuff[50];
+               fprintf(fdOLL[iter->second.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL!\n", 
+                  FmtYYYYMMDD_HH24MISS(szTimeBuff), 
+                  iBench, iBench2, iter->second.iOLL+1, iter_o->second, 
+                  iter->second.iMoveCount_WithF2is2Moves, iter->second.iMoveCount, mPrimary.size());
+               fprintf(fdOLL[iter->second.iOLL], "Scramble: %s\n", iter->second.szScramble);
+               fprintf(fdOLL[iter->second.iOLL], "Solution: %s\n", iter->second.szSolution);
+               printchart((char*)iter->first.c_str(), fdOLL[iter->second.iOLL]);
+               fflush(fdOLL[iter->second.iOLL]);
+               }
+            for(int iA=0; iA<57; ++iA)
+               fclose(fdOLL[iA]);      
+            }
          bExit = true;
-			exit(0);
-			}
+         return 0; 
+         }, 8000000))
+         {
+         DBGS("Could not start thread, errno=%ld, strerror(errno)=[%s]", errno, strerror(errno));
+         bExit = true;
+         exit(0);
+         }
       //
       // SetThreadPriority(cThread.hThread, THREAD_PRIORITY_BELOW_NORMAL); //THREAD_PRIORITY_BELOW_NORMAL //THREAD_PRIORITY_NORMAL //THREAD_PRIORITY_ABOVE_NORMAL
       // I so no improvement tinkering with this setting.
@@ -3447,9 +3447,9 @@ int main(int argc, char **argv)
       while(bThreadReady == false) { Sleep(1000); }
       printf(".Thread %d is ready and running.\n", m_iThreadNum); fflush(stdout);
       Sleep(4000);
-		}	
-	printf(".All Threads are running.\n"); fflush(stdout);
-	while(!bExit) { Sleep(1000); }
+      }  
+   printf(".All Threads are running.\n"); fflush(stdout);
+   while(!bExit) { Sleep(1000); }
    printf("Done...\n");
    
    exit(0);
