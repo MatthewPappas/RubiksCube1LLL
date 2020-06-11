@@ -427,7 +427,7 @@ EXTERNAL void _DBGS(char *szFile, int iLineNo, const char *szFunction, const cha
 #include <Accctrl.h>
 #include <Aclapi.h>
 void SetFilePermission(LPCSTR FileName)
-{
+   {
    PSID pEveryoneSID = NULL;
    PACL pACL = NULL;
    EXPLICIT_ACCESS ea[1];
@@ -493,7 +493,7 @@ void SetFilePermission(LPCSTR FileName)
    FreeSid(pEveryoneSID);
    LocalFree(pACL);
    LocalFree(pSD);
-}
+   }
 #endif
 
 void CreateAccessable(char *pFile)
@@ -2347,8 +2347,18 @@ bool m_bOptionS = false;
 bool bReenableOptionS_at_K = false;
 bool bOptionK = false;    // keep going (dont exit), use -start if provided and continue from there, ignores -r.
 char szOptionF_File[2048];
+
+typedef struct aMoves_T
+   { 
+   char aMoves[61]; // first character will be the length of the scramble. Use this for ITC (Inter Thread Communication)
+   };
+std::deque<aMoves_T> dqNewMoves;
+cmutex cMutex(true);
+
 bool bThreadReady;
+int iDoNThreads = 1;
 int m_iThreadNum;
+
 char iExit = 0;           // each thread exit will add 1 here.
    
 int ASCIItoByte(char *pIn, char *pOut) // returns #of moves
@@ -2481,7 +2491,7 @@ int main(int argc, char **argv)
       mPossibleMoves.insert(std::pair<int, char*>{iPossibleMoves, pPtr});
       iPossibleMoves++;
       }
-        
+
    DBG();
    if(argc == 2 && stricmp(argv[1], "-h")==0)
       {
@@ -2495,8 +2505,9 @@ int main(int argc, char **argv)
       printf("                     note: F2 counts as 1 move in this application.\n");
       printf("  -m[number of threads]\n");
       printf("                     chose number of threads to create 1 is the default.\n");
-      printf("                     note: application creates numbered folders per thread 1,2,3... etc\n");
-      printf("                           for which to append its output data. Also use max #of virtual cores - 2 for system stability.\n");
+      printf("                     note: application creates numbered folders per thread for which to append its output data,\n");
+      printf("                           however, only thread 1 will output data, so only 1 folder will be created.\n");
+      printf("                           Also use max #of virtual cores - 2 for system stability.\n");
       printf("  -k                 -f by itself, without -r, will simply read input.txt, then recreate the output\n");
       printf("                     files in folder 1. Adding -k instead of -r means to proceed incrementally, not randomly,\n");
       printf("                     thus using -start and -stop or their defaults.\n");
@@ -2532,7 +2543,6 @@ int main(int argc, char **argv)
    char *aMoves = (char*)malloc(60);
    memset(aMoves, 0, 60);
    int iMaxMoves;
-   int iDoNThreads = 1;
    
    if(argc > 1) // use input arguments to say starting ranges...
       {
@@ -2755,6 +2765,9 @@ int main(int argc, char **argv)
          char cFoundAllMax = 0;
          bool bReadingIn = true;
          std::deque<std::string> dqScrambles; // Process the file backwards
+         int iCurrNewMoves = 0;
+         char cNewMoves = 0;
+         aMoves_T pushed_aMoves;
          
          // Omit processing what we already processed. (saves about a seconds)
          typedef struct Node_T
@@ -2782,13 +2795,14 @@ int main(int argc, char **argv)
 
          char szFile[2048];
          FILE *fdOLL[57]; // ignoring 0th
-         for(int iA=0; iA<57; ++iA)
-            {
-            snprintf(szFile, sizeof(szFile), "%d", iThreadNum);
-            mkdir(szFile);
-            snprintf(szFile, sizeof(szFile), "%d\\%s_oll_%02d.txt", iThreadNum, szArgv0, iA+1);
-            fdOLL[iA] = fopen(szFile, "a+b");
-            }
+         if(iThreadNum == 1)
+            for(int iA=0; iA<57; ++iA)
+               {
+               snprintf(szFile, sizeof(szFile), "%d", iThreadNum);
+               mkdir(szFile);
+               snprintf(szFile, sizeof(szFile), "%d\\%s_oll_%02d.txt", iThreadNum, szArgv0, iA+1);
+               fdOLL[iA] = fopen(szFile, "a+b");
+               }
          
          FILE *fpOptionF = NULL;
          if(bOptionF) fpOptionF = fopen(szOptionF_File, "rb");
@@ -2806,13 +2820,17 @@ int main(int argc, char **argv)
                std::chrono::duration<double> diff = end-start;
                if(iMaxMoves-2 >= 0)
                   { 
-                  DBGS(".%d.%2.2s%2.2s.diff[%.3f].combos per sec[%llu].Found[%d].Unique1LLLs[%d]",
+                  DBGS(".%d.%2.2s%2.2s.diff[%.3f].combos per sec[%llu].Thread[%d].Found[%d].Unique1LLLs[%d]",
                      iMaxMoves, mPossibleMoves.find(aMoves[iMaxMoves-2])->second, 
                      mPossibleMoves.find(aMoves[iMaxMoves-1])->second, diff,
-                     (unsigned long long)(((double)1.0/(double)diff.count())*(double)10000000.0), iFoundCount,
+                     (unsigned long long)(((double)1.0/(double)diff.count())*(double)10000000.0), 
+                     iThreadNum, iFoundCount,
                      mPrimary.size());
                   }
                start = std::chrono::high_resolution_clock::now();
+               cMutex.lock();
+               if(iCurrNewMoves < dqNewMoves.size()) cNewMoves = 1;
+               cMutex.unlock();
                } 
             if(iBench >= 1000000000)
                {
@@ -2821,276 +2839,305 @@ int main(int argc, char **argv)
                }
             if(bShutdown) 
                {
-               for(int iA=0; iA<57; ++iA)
-                  fclose(fdOLL[iA]);
+               if(iThreadNum == 1)
+                  for(int iA=0; iA<57; ++iA)
+                     fclose(fdOLL[iA]);
                iExit++;
                return 0;
                }
 
-            if(bOptionF)
-               {
-               if(cOptionR == 2) // once all fgets is done, we can start playing with the algs.
-                  {  
-                  ir4CountDown--;
-                  if(ir4CountDown == 0)
-                     {
-                     ir4CountDown = ir4CountDownMAX;                     
-                     if(iaPrimary_Curr)
-                        {
-                        iRndBuffSize = 0;
-                        while(iRndBuffSize < 60)
-                           {
-                           auto iter1 = &aPrimary[localrnd(iaPrimary_Curr-1)];      
-                           // Ensure compatable moves within entire buffer.
-                           // forwards and backwards...
-                           char cFwd = localrnd(1);
-                           char cNew = (*iter1)->second.aMovesScramble[cFwd?0:(*iter1)->second.iMoveCount-1];
-                           if(iRndBuffSize)
-                              {
-                              char cPrev = szRndBuff[iRndBuffSize-1];
-                              if(!bMovesCompatable_v2(cPrev, cNew))
-                                 {
-                                 char cMid = localrnd(iPossibleMoves-1);
-                                 for(; !(bMovesCompatable_v2(cPrev, cMid) && bMovesCompatable_v2(cMid, cNew)); )
-                                    cMid = localrnd(iPossibleMoves-1);
-                                 szRndBuff[iRndBuffSize++] = cMid;
-                                 }
-                              }
-                           szRndBuff[iRndBuffSize++] = cNew;
-                           for(int iA=1; iA<(*iter1)->second.iMoveCount; ++iA)
-                              szRndBuff[iRndBuffSize++] = (*iter1)->second.aMovesScramble[cFwd?iA:(*iter1)->second.iMoveCount-iA-1];
-                           }
-                        for(int iA=iRndBuffSize-2; iA>=0; --iA)
-                           szRndBuff[iRndBuffSize++] = szRndBuff[iA];
-                        }                        
-                     }
-
-                  //
-                  // Okay now try a random combination of moves made from the best stuff on earth.
-                  //
-#if 1
-                  if(cOptionR_rnd_value != -1)
-                     {
-                     if(cOptionR_add_value != -1)
-                        iMaxMoves = localrnd(cOptionR_rnd_value)+cOptionR_add_value;
-                     else
-                        iMaxMoves = localrnd(cOptionR_rnd_value);
-                     }
-                  else 
-                     iMaxMoves = localrnd((cFoundAllMax?cFoundAllMax:30)-6)+6;
-                  register char *pJmpTo =  &szRndBuff[localrnd(60)];
-                  register char *pRndPos = &szRndBuff[localrnd(60)];
-                  register char iRndJmp = localrnd(iMaxMoves-1)+1;
-                  register char iMM = iMaxMoves;
-                  for(register char iA=0; iA<iMM; iA++)
-                     {
-                     if(iRndJmp == iA)
-                        {
-                        pRndPos = pJmpTo;
-                        if(!bMovesCompatable_v2(*pRndPos, aMoves[iA-1])) pRndPos++;
-                        for(; iA<iMM; iA++)
-                           aMoves[iA] = *pRndPos++;
-                        break;
-                        }
-                     aMoves[iA] = *pRndPos++;
-                     }
-   
-#endif
-
-#if 0             // 
-                  // Life without RndBuffer, too slow.
-                  //
-                  if(cOptionR_rnd_value != -1)
-                     {
-                     if(cOptionR_add_value != -1)
-                        iMaxMoves = localrnd(cOptionR_rnd_value)+cOptionR_add_value;
-                     else
-                        iMaxMoves = localrnd(cOptionR_rnd_value);
-                     }
-                  else 
-                     iMaxMoves = localrnd((cFoundAllMax?cFoundAllMax:30)-6)+6;
-                                 
-                  int iPick;
-                  char *pRndPos;
-                  int iPos;
-                  char cFwd;
-                  char iRndJmp;
-                  int iMoveCount;
-                  
-                  iPick = localrnd(iaPrimary_Curr-1);
-                  iMoveCount = aPrimary[iPick]->second.iMoveCount;
-                  pRndPos = aPrimary[iPick]->second.aMovesScramble;
-                  iPos = localrnd(iMoveCount-2);
-                  cFwd = localrnd(1)?1:-1;
-                  iRndJmp = localrnd(iMaxMoves-1)+1;
-                  
-                  aMoves[0] = pRndPos[iPos];
-                  iPos += cFwd;
-                  iRndJmp--;
-                  for(char iA=1; iA<iMaxMoves; iA++, iRndJmp--)
-                     {
-                     if(iRndJmp == 0 || iPos < 0 || iPos >= iMoveCount)
-                        {
-                        iPick = localrnd(iaPrimary_Curr-1);
-                        iMoveCount = aPrimary[iPick]->second.iMoveCount;
-                        pRndPos = aPrimary[iPick]->second.aMovesScramble;
-                        iPos = localrnd(iMoveCount-2);
-                        cFwd = localrnd(1)?1:-1;
-                        iRndJmp = localrnd(iMaxMoves-1)+1;
-                        if(!bMovesCompatable_v2(pRndPos[iPos], aMoves[iA-1])) iPos++;
-                        }
-                     aMoves[iA] = pRndPos[iPos];
-                     iPos += cFwd;
-                     }
-   
-#endif
-
-#if 0
-                  // testing...
-                  iMaxMoves = 12; // at 5 moves, 1.3 seconds, at 12 moves its 2.5, so rotation is an issue.
-                  aMoves[0] = 0;
-                  aMoves[1] = 3;
-                  aMoves[2] = 0;
-                  aMoves[3] = 3;
-                  aMoves[4] = 0;
-                  aMoves[5] = 3;
-                  aMoves[6] = 0;
-                  aMoves[7] = 3;
-                  aMoves[8] = 0;
-                  aMoves[9] = 3;
-                  aMoves[10] = 0;
-                  aMoves[11] = 3;
-#endif                  
-
-#if 0 
-                  // 
-                  // Turn this on to validate aMoves only has compatable adjacent turns
-                  //
-                  for(int iA=0, iB=1; iA<iMaxMoves-1 && iB<iMaxMoves; ++iA, ++iB)
-                     {
-                     if(!bMovesCompatable_v2(aMoves[iA], aMoves[iB]))
-                        {
-                        printf("Owh No!!!\n"); fflush(stdout);
-                        for(int iA=0; iA<iMaxMoves+2; ++iA)
-                           printf("[%d]\n", aMoves[iA]);
-                        printf("iRndJmp=[%d]\n", iRndJmp);
-                        fflush(stdout);
-                        pause(99999);
-                        }
-                     }
-#endif
+            if(cNewMoves) // share info between threads, so that only 1 thread writes to files.
+               {               
+               if(cNewMoves == 1)
+                  {
+                  pushed_aMoves.aMoves[0] = iMaxMoves;
+                  memcpy(&pushed_aMoves.aMoves[1], aMoves, iMaxMoves);
+                  cNewMoves = 2;
+                  }
+               cMutex.lock();
+               if(iCurrNewMoves < dqNewMoves.size())
+                  {
+                  iMaxMoves = dqNewMoves[iCurrNewMoves].aMoves[0];
+                  memcpy(aMoves, &dqNewMoves[iCurrNewMoves].aMoves[1], iMaxMoves);
+                  iCurrNewMoves++;
                   }
                else
                   {
-                  if(bReadingIn)
-                     {
-                     char szBuff[65536];                             
-                     while(fgets(szBuff, sizeof(szBuff), fpOptionF))
-                        {
-                        rem1310(szBuff);
-                        trim(szBuff); 
-                        if(!szBuff[0]) continue;
-                        if(strchr(szBuff, '.')) continue;
-                        if(strncmp(szBuff, "Scramble: ", 10)!=0) continue;
-                        strcat(szBuff, "    "); 
-                        dqScrambles.push_back(&szBuff[10]);
-                        }
-                     fclose(fpOptionF);
-                     fpOptionF = NULL;
-                     bReadingIn = false;
-                     }
-                  if(!bReadingIn)
-                     {
-                     if(dqScrambles.size())
-                        {
-                        memset(aMoves, 0, 60);
-                        iMaxMoves = ASCIItoByte((char*)dqScrambles.back().c_str(), aMoves);
-                        if(iMaxMoves > cFoundAllMax) cFoundAllMax = iMaxMoves;
-                        dqScrambles.pop_back();
-                        }
-                     else
-                        {
-                        if(mPrimary.size() != 16416) cFoundAllMax = 0;
-                        iFoundCount = 0;
-                        if(bOptionK)
-                           {
-                           iMaxMoves = iStartMovesCount;
-                           memcpy(aMoves, aMovesStart, 60);
-                           bOptionF = false;
-                           bFirst = true;
-                           if(bReenableOptionS_at_K) bOptionS = true;
-                           continue;
-                           }
-                        if(cOptionR == 0)
-                           {
-                           printf("Done!\n");
-                           break;
-                           }
-                        cOptionR = 2;
-                        continue;
-                        }
-                     }
-                  }              
-               bFirst = true;
-               }
-                  
-            if(!bFirst)
-               {
-               for(int iM=0;;)
-                  {
-                  aMoves[iM]++;
-                  if(aMoves[iM] >= iPossibleMoves)
-                     {
-                     if(aMoves[iM+1] >= 2)
-                        {
-                        for(int iM2=iM; iM2>=0; )
-                           {
-                           aMoves[iM2] = 0;
-                           iM2--;
-                           if(iM2 < 0) break;
-                           aMoves[iM2] = 3;
-                           iM2--;
-                           }
-                        }
-                     else
-                        {
-                        for(int iM2=iM; iM2>=0; )
-                           {
-                           aMoves[iM2] = 3;
-                           iM2--;
-                           if(iM2 < 0) break;
-                           aMoves[iM2] = 0;
-                           iM2--;
-                           }  
-                        }                  
-                     if(iM == iMaxMoves-1) { iMaxMoves++; break; }
-                     iM++;
-                     continue;
-                     }
-                  if(iM < iMaxMoves-1 && !bMovesCompatable_v2(aMoves[iM], aMoves[iM+1]))
-                     {
-                     continue;
-                     }
-                  break;
+                  iMaxMoves = pushed_aMoves.aMoves[0];
+                  memcpy(aMoves, &pushed_aMoves.aMoves[1], iMaxMoves);
+                  cNewMoves = 0;
                   }
+               cMutex.unlock();
                }
             else
-               bFirst = false;
-         
-            if(bOptionS)
                {
-               for(int iA=60-1; iA>=0; --iA)
+               if(bOptionF)
                   {
-                  if(aMoves[iA] != aMovesStop[iA])
-                     {
-                     if(aMoves[iA] > aMovesStop[iA])    // memcmp(aMoves, aMovesStop, 60) == 0) // cost: 13 million / sec
+                  if(cOptionR == 2) // once all fgets is done, we can start playing with the algs.
+                     {  
+                     ir4CountDown--;
+                     if(ir4CountDown == 0)
                         {
-                        for(int iA=0; iA<57; ++iA)
-                           fclose(fdOLL[iA]);
-                        iExit++;
-                        return 0;
+                        ir4CountDown = ir4CountDownMAX;                     
+                        if(iaPrimary_Curr)
+                           {
+                           iRndBuffSize = 0;
+                           while(iRndBuffSize < 60)
+                              {
+                              auto iter1 = &aPrimary[localrnd(iaPrimary_Curr-1)];      
+                              // Ensure compatable moves within entire buffer.
+                              // forwards and backwards...
+                              char cFwd = localrnd(1);
+                              char cNew = (*iter1)->second.aMovesScramble[cFwd?0:(*iter1)->second.iMoveCount-1];
+                              if(iRndBuffSize)
+                                 {
+                                 char cPrev = szRndBuff[iRndBuffSize-1];
+                                 if(!bMovesCompatable_v2(cPrev, cNew))
+                                    {
+                                    char cMid = localrnd(iPossibleMoves-1);
+                                    for(; !(bMovesCompatable_v2(cPrev, cMid) && bMovesCompatable_v2(cMid, cNew)); )
+                                       cMid = localrnd(iPossibleMoves-1);
+                                    szRndBuff[iRndBuffSize++] = cMid;
+                                    }
+                                 }
+                              szRndBuff[iRndBuffSize++] = cNew;
+                              for(int iA=1; iA<(*iter1)->second.iMoveCount; ++iA)
+                                 szRndBuff[iRndBuffSize++] = (*iter1)->second.aMovesScramble[cFwd?iA:(*iter1)->second.iMoveCount-iA-1];
+                              }
+                           for(int iA=iRndBuffSize-2; iA>=0; --iA)
+                              szRndBuff[iRndBuffSize++] = szRndBuff[iA];
+                           }                        
+                        }
+   
+                     //
+                     // Okay now try a random combination of moves made from the best stuff on earth.
+                     //
+#if 1
+                     if(cOptionR_rnd_value != -1)
+                        {
+                        if(cOptionR_add_value != -1)
+                           iMaxMoves = localrnd(cOptionR_rnd_value)+cOptionR_add_value;
+                        else
+                           iMaxMoves = localrnd(cOptionR_rnd_value);
+                        }
+                     else 
+                        iMaxMoves = localrnd((cFoundAllMax?cFoundAllMax:30)-6)+6;
+                     register char *pJmpTo =  &szRndBuff[localrnd(60)];
+                     register char *pRndPos = &szRndBuff[localrnd(60)];
+                     register char iRndJmp = localrnd(iMaxMoves-1)+1;
+                     register char iMM = iMaxMoves;
+                     for(register char iA=0; iA<iMM; iA++)
+                        {
+                        if(iRndJmp == iA)
+                           {
+                           pRndPos = pJmpTo;
+                           if(!bMovesCompatable_v2(*pRndPos, aMoves[iA-1])) pRndPos++;
+                           for(; iA<iMM; iA++)
+                              aMoves[iA] = *pRndPos++;
+                           break;
+                           }
+                        aMoves[iA] = *pRndPos++;
+                        }
+      
+#endif
+   
+#if 0             
+                     // 
+                     // Life without RndBuffer, too slow.
+                     //
+                     if(cOptionR_rnd_value != -1)
+                        {
+                        if(cOptionR_add_value != -1)
+                           iMaxMoves = localrnd(cOptionR_rnd_value)+cOptionR_add_value;
+                        else
+                           iMaxMoves = localrnd(cOptionR_rnd_value);
+                        }
+                     else 
+                        iMaxMoves = localrnd((cFoundAllMax?cFoundAllMax:30)-6)+6;
+                                    
+                     int iPick;
+                     char *pRndPos;
+                     int iPos;
+                     char cFwd;
+                     char iRndJmp;
+                     int iMoveCount;
+                     
+                     iPick = localrnd(iaPrimary_Curr-1);
+                     iMoveCount = aPrimary[iPick]->second.iMoveCount;
+                     pRndPos = aPrimary[iPick]->second.aMovesScramble;
+                     iPos = localrnd(iMoveCount-2);
+                     cFwd = localrnd(1)?1:-1;
+                     iRndJmp = localrnd(iMaxMoves-1)+1;
+                     
+                     aMoves[0] = pRndPos[iPos];
+                     iPos += cFwd;
+                     iRndJmp--;
+                     for(char iA=1; iA<iMaxMoves; iA++, iRndJmp--)
+                        {
+                        if(iRndJmp == 0 || iPos < 0 || iPos >= iMoveCount)
+                           {
+                           iPick = localrnd(iaPrimary_Curr-1);
+                           iMoveCount = aPrimary[iPick]->second.iMoveCount;
+                           pRndPos = aPrimary[iPick]->second.aMovesScramble;
+                           iPos = localrnd(iMoveCount-2);
+                           cFwd = localrnd(1)?1:-1;
+                           iRndJmp = localrnd(iMaxMoves-1)+1;
+                           if(!bMovesCompatable_v2(pRndPos[iPos], aMoves[iA-1])) iPos++;
+                           }
+                        aMoves[iA] = pRndPos[iPos];
+                        iPos += cFwd;
+                        }
+      
+#endif
+   
+#if 0
+                     // testing...
+                     iMaxMoves = 12; // at 5 moves, 1.3 seconds, at 12 moves its 2.5, so rotation is an issue.
+                     aMoves[0] = 0;
+                     aMoves[1] = 3;
+                     aMoves[2] = 0;
+                     aMoves[3] = 3;
+                     aMoves[4] = 0;
+                     aMoves[5] = 3;
+                     aMoves[6] = 0;
+                     aMoves[7] = 3;
+                     aMoves[8] = 0;
+                     aMoves[9] = 3;
+                     aMoves[10] = 0;
+                     aMoves[11] = 3;
+#endif                  
+   
+#if 0 
+                     // 
+                     // Turn this on to validate aMoves only has compatable adjacent turns
+                     //
+                     for(int iA=0, iB=1; iA<iMaxMoves-1 && iB<iMaxMoves; ++iA, ++iB)
+                        {
+                        if(!bMovesCompatable_v2(aMoves[iA], aMoves[iB]))
+                           {
+                           printf("Owh No!!!\n"); fflush(stdout);
+                           for(int iA=0; iA<iMaxMoves+2; ++iA)
+                              printf("[%d]\n", aMoves[iA]);
+                           printf("iRndJmp=[%d]\n", iRndJmp);
+                           fflush(stdout);
+                           pause(99999);
+                           }
+                        }
+#endif
+                     }
+                  else
+                     {
+                     if(bReadingIn)
+                        {
+                        char szBuff[65536];                             
+                        while(fgets(szBuff, sizeof(szBuff), fpOptionF))
+                           {
+                           rem1310(szBuff);
+                           trim(szBuff); 
+                           if(!szBuff[0]) continue;
+                           if(strchr(szBuff, '.')) continue;
+                           if(strncmp(szBuff, "Scramble: ", 10)!=0) continue;
+                           strcat(szBuff, "    "); 
+                           dqScrambles.push_back(&szBuff[10]);
+                           }
+                        fclose(fpOptionF);
+                        fpOptionF = NULL;
+                        bReadingIn = false;
+                        }
+                     if(!bReadingIn)
+                        {
+                        if(dqScrambles.size())
+                           {
+                           memset(aMoves, 0, 60);
+                           iMaxMoves = ASCIItoByte((char*)dqScrambles.back().c_str(), aMoves);
+                           if(iMaxMoves > cFoundAllMax) cFoundAllMax = iMaxMoves;
+                           dqScrambles.pop_back();
+                           }
+                        else
+                           {
+                           if(mPrimary.size() != 16416) cFoundAllMax = 0;
+                           iFoundCount = 0;
+                           if(bOptionK)
+                              {
+                              iMaxMoves = iStartMovesCount;
+                              memcpy(aMoves, aMovesStart, 60);
+                              bOptionF = false;
+                              bFirst = true;
+                              if(bReenableOptionS_at_K) bOptionS = true;
+                              continue;
+                              }
+                           if(cOptionR == 0)
+                              {
+                              printf("Done!\n");
+                              break;
+                              }
+                           cOptionR = 2;
+                           continue;
+                           }
+                        }
+                     }              
+                  bFirst = true;
+                  }
+                     
+               if(!bFirst)
+                  {
+                  for(int iM=0;;)
+                     {
+                     aMoves[iM]++;
+                     if(aMoves[iM] >= iPossibleMoves)
+                        {
+                        if(aMoves[iM+1] >= 2)
+                           {
+                           for(int iM2=iM; iM2>=0; )
+                              {
+                              aMoves[iM2] = 0;
+                              iM2--;
+                              if(iM2 < 0) break;
+                              aMoves[iM2] = 3;
+                              iM2--;
+                              }
+                           }
+                        else
+                           {
+                           for(int iM2=iM; iM2>=0; )
+                              {
+                              aMoves[iM2] = 3;
+                              iM2--;
+                              if(iM2 < 0) break;
+                              aMoves[iM2] = 0;
+                              iM2--;
+                              }  
+                           }                  
+                        if(iM == iMaxMoves-1) { iMaxMoves++; break; }
+                        iM++;
+                        continue;
+                        }
+                     if(iM < iMaxMoves-1 && !bMovesCompatable_v2(aMoves[iM], aMoves[iM+1]))
+                        {
+                        continue;
                         }
                      break;
+                     }
+                  }
+               else
+                  bFirst = false;
+            
+               if(bOptionS)
+                  {
+                  for(int iA=60-1; iA>=0; --iA)
+                     {
+                     if(aMoves[iA] != aMovesStop[iA])
+                        {
+                        if(aMoves[iA] > aMovesStop[iA])    // memcmp(aMoves, aMovesStop, 60) == 0) // cost: 13 million / sec
+                           {
+                           if(iThreadNum == 1)
+                              for(int iA=0; iA<57; ++iA)
+                                 fclose(fdOLL[iA]);
+                           iExit++;
+                           return 0;
+                           }
+                        break;
+                        }
                      }
                   }
                }
@@ -3238,6 +3285,15 @@ int main(int argc, char **argv)
                         iMoveCount = iMaxMoves;
                         char aMovesScramble[60];
                         memcpy(aMovesScramble, aMoves, 60);
+                        if(cNewMoves != 2 && iDoNThreads > 1)
+                           {
+                           cMutex.lock();
+                           aMoves_T stNewData;
+                           stNewData.aMoves[0] = iMaxMoves;
+                           memcpy(&stNewData.aMoves[1], aMoves, iMaxMoves);
+                           dqNewMoves.push_back(stNewData);
+                           cMutex.unlock();
+                           }
                         char szScramble[60*4];
                         szScramble[0] = 0;
                         for(int iA=0; iA<iMaxMoves; ++iA)
@@ -3278,15 +3334,18 @@ int main(int argc, char **argv)
                         printf("Solution: %s\n", st.szSolution);
                         printchart(sz1LLL);
 #endif
-                        fprintf(fdOLL[st.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL!\n", 
-                           FmtYYYYMMDD_HH24MISS(szTimeBuff), 
-                           iBench, iBench2, st.iOLL, iter_o->second, 
-                           iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size());
-                        fprintf(fdOLL[st.iOLL], "%d Rotations to get desired OLL orientation\n", iLimit);
-                        fprintf(fdOLL[st.iOLL], "Scramble: %s\n", szScramble);
-                        fprintf(fdOLL[st.iOLL], "Solution: %s\n", st.szSolution);
-                        printchart(sz1LLL, fdOLL[st.iOLL]);
-                        fflush(fdOLL[st.iOLL]);
+                        if(iThreadNum == 1)
+                           {
+                           fprintf(fdOLL[st.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL!\n", 
+                              FmtYYYYMMDD_HH24MISS(szTimeBuff), 
+                              iBench, iBench2, st.iOLL, iter_o->second, 
+                              iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size());
+                           fprintf(fdOLL[st.iOLL], "%d Rotations to get desired OLL orientation\n", iLimit);
+                           fprintf(fdOLL[st.iOLL], "Scramble: %s\n", szScramble);
+                           fprintf(fdOLL[st.iOLL], "Solution: %s\n", st.szSolution);
+                           printchart(sz1LLL, fdOLL[st.iOLL]);
+                           fflush(fdOLL[st.iOLL]);
+                           }
                         iFoundCount++;
                         }
                      else
@@ -3304,7 +3363,16 @@ int main(int argc, char **argv)
                            {
                            int iCountWas = iter_p->second.iMoveCount;
                            char aMovesScramble[60];
-                           memcpy(aMovesScramble, aMoves, 60);                    
+                           memcpy(aMovesScramble, aMoves, 60);
+                           if(cNewMoves != 2 && iDoNThreads > 1)
+                              {
+                              cMutex.lock();
+                              aMoves_T stNewData;
+                              stNewData.aMoves[0] = iMaxMoves;
+                              memcpy(&stNewData.aMoves[1], aMoves, iMaxMoves);
+                              dqNewMoves.push_back(stNewData);
+                              cMutex.unlock();
+                              }                  
                            char szScramble[60*4];
                            szScramble[0] = 0;
                            for(int iA=0; iA<iMaxMoves; ++iA)
@@ -3337,16 +3405,19 @@ int main(int argc, char **argv)
                            printf("Solution: %s\n", st.szSolution);
                            printchart(sz1LLL);
 #endif                        
-                           fprintf(fdOLL[st.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL! (found shorter alg <%d)\n", 
-                              FmtYYYYMMDD_HH24MISS(szTimeBuff), 
-                              iBench, iBench2, st.iOLL+1, iter_o->second, 
-                              iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size(),
-                              iCountWas);
-                           fprintf(fdOLL[st.iOLL], "%d Rotations to get desired OLL orientation\n", iLimit);
-                           fprintf(fdOLL[st.iOLL], "Scramble: %s\n", szScramble);
-                           fprintf(fdOLL[st.iOLL], "Solution: %s\n", st.szSolution);
-                           printchart(sz1LLL, fdOLL[st.iOLL]);
-                           fflush(fdOLL[st.iOLL]);
+                           if(iThreadNum == 1)
+                              {
+                              fprintf(fdOLL[st.iOLL], "\n%s: tried %dx%d000000000 combos, OLL is #%d: Found %d for this OLL, %d moves (R2 counts twice), %d moves, Found %d 1LLL! (found shorter alg <%d)\n", 
+                                 FmtYYYYMMDD_HH24MISS(szTimeBuff), 
+                                 iBench, iBench2, st.iOLL+1, iter_o->second, 
+                                 iMoveCount_WithF2is2Moves, iMoveCount, mPrimary.size(),
+                                 iCountWas);
+                              fprintf(fdOLL[st.iOLL], "%d Rotations to get desired OLL orientation\n", iLimit);
+                              fprintf(fdOLL[st.iOLL], "Scramble: %s\n", szScramble);
+                              fprintf(fdOLL[st.iOLL], "Solution: %s\n", st.szSolution);
+                              printchart(sz1LLL, fdOLL[st.iOLL]);
+                              fflush(fdOLL[st.iOLL]);
+                              }
                            iFoundCount++;
                            }
                         }
@@ -3363,8 +3434,9 @@ int main(int argc, char **argv)
                      for(int iA=0; iA<iMaxMoves; ++iA)
                         printf("%2.2s ", mPossibleMoves.find(aMoves[iA])->second);
                      printf("\n");
-                     for(int iA=0; iA<57; ++iA)
-                        fclose(fdOLL[iA]);
+                     if(iThreadNum == 1)
+                        for(int iA=0; iA<57; ++iA)
+                           fclose(fdOLL[iA]);
                      iExit++;
                      return 0;
                      }
@@ -3408,10 +3480,11 @@ int main(int argc, char **argv)
                   }
                }
             };
-         for(int iA=0; iA<57; ++iA)
-            fclose(fdOLL[iA]);
+         if(iThreadNum == 1)
+            for(int iA=0; iA<57; ++iA)
+               fclose(fdOLL[iA]);
          printf("Main part is done.\n");
-         if(bOptionF)
+         if(bOptionF && iThreadNum == 1)
             {      
             printf("Okay, outputting final results... recreating all text files....\n");
             char szFile[2048];
