@@ -2506,7 +2506,7 @@ int main(int argc, char **argv)
       printf("  -r3,12             same as -r except we choose random number 0-3 and add 12 for number of moves. \n");
       printf("                     note: F2 counts as 1 move in this application.\n");
       printf("  -m[number of threads]\n");
-      printf("                     chose number of threads to create 1 is the default.\n");
+      printf("                     choose number of threads to create 1 is the default.\n");
       printf("                     note: application creates numbered folders per thread for which to append its output data,\n");
       printf("                           however, only thread 1 will output data, so only 1 folder will be created.\n");
       printf("                           Also use max #of virtual cores - 2 for system stability.\n");
@@ -2532,7 +2532,7 @@ int main(int argc, char **argv)
       printf("  %s.exe -f input.txt -k\n", szArgv0);
       printf("  %s.exe -f input.txt -r\n", szArgv0);
       printf("  %s.exe -m3 -f input.txt -r\n", szArgv0);
-      printf("  type 1\\* 2\\* 3\\* > input.txt\n");
+      printf("  type 1\\* > input.txt\n");
       printf("  %s.exe -f input.txt\n", szArgv0);
       printf("  It takes 4-5 minutes on an i3 to generate all 16416 1LLLs with 1 thread,\n");
       printf("  however it takes time and lots of CPUs to shorten the algorithms,\n");
