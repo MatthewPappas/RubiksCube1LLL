@@ -2391,6 +2391,8 @@ void ByteToASCII(char *pIn, int iInCount, char *pOut)
       }
    }
 
+std::vector<unsigned int> m_vPrimes;
+
 bool IsPrime_v1(int n) // slow
    {
    int i, m = 0, flag = 0;
@@ -2697,7 +2699,21 @@ int main(int argc, char **argv)
       "yyyyyyyyy"   //U 4
       "wwwwwwwww"   //D 5
       , 6*3*3);
-
+   
+   if(m_cOptionR)
+      {
+      int iPrimesTo = 10000000;
+      printf(".Calculating primes to %d\n", iPrimesTo); fflush(stdout);
+      for(int iA=2; iA<=iPrimesTo; ++iA)
+         if(IsPrime(iA))
+            {
+            m_vPrimes.push_back(iA); //aPrimes[iB++] = iA;
+            //if((m_vPrimes.size() % 66000) == 0)
+               //printf(".%d is prime...\n", iA); fflush(stdout); // I need a few of these...
+            }
+      printf(".Done Calculating primes to %d. Found %d primes.\n", iPrimesTo, m_vPrimes.size()); fflush(stdout);
+      }
+         
    m_iThreadNum = 0;
    for(int iN = 0; iN<iDoNThreads; ++iN)
       {
@@ -2714,20 +2730,9 @@ int main(int argc, char **argv)
          //
          // Prime numbers. (SAVE TO FILE, THIS TAKES WAY TOO LONG!).
          //
-         unsigned int *aPrimes; //[18065]; to 201037
-         int iPrimesTo = 10000000;
-         std::vector<unsigned int> vPrimes;
-         printf(".Calculating primes to %d\n", iPrimesTo); fflush(stdout);
-         for(int iA=2; iA<=iPrimesTo; ++iA)
-            if(IsPrime(iA))
-               {
-               vPrimes.push_back(iA); //aPrimes[iB++] = iA;
-               //if((vPrimes.size() % 66000) == 0)
-                  //printf(".%d is prime...\n", iA); fflush(stdout); // I need a few of these...
-               }
-         aPrimes = (unsigned int *)&vPrimes[0];
-         int iNumPrimes = vPrimes.size();         
-         printf(".Done Calculating primes to %d. Found %d primes.\n", iPrimesTo, iNumPrimes); fflush(stdout);
+         std::vector<unsigned int> vPrimes = m_vPrimes;
+         unsigned int *aPrimes = (unsigned int *)&vPrimes[0];
+         int iNumPrimes = vPrimes.size();
          unsigned int g_seed1 = tAppStart * GetCurrentThreadId();
          unsigned int g_seed2 = g_seed1 * 827719;
          unsigned int g_seed3 = g_seed2 * 1755563;
